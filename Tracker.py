@@ -1,6 +1,8 @@
 import argparse
 import datetime
 import csv
+from operator import index
+
 import tabulate
 import os
 
@@ -96,6 +98,34 @@ def delete_expense(args):
             writer.writerows(all_rows)
         print(f"Usunieto wydatek (ID: {ID})")
 
+def edit_expense(args):
+    ID = args.id
+    date = args.data
+    description = args.opis
+    amount = args.kwota
+    category = args.kategoria
+    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)
+        all_rows = list(reader)
+        ID_list = [int(row[0]) for row in all_rows]
+    if ID not in ID_list:
+        print(f"Nie mozna edytowac wydatku o ID: {ID}, poniewaz takowy nie istnieje!")
+    else:
+        row_index = ID_list.index(ID)
+        if date != None:
+            all_rows[row_index][1] = date
+        if description != None:
+            all_rows[row_index][2] = description
+        if amount != None:
+            all_rows[row_index][3] = amount
+        if category != None:
+            all_rows[row_index][4] = category
+        with open('wydatki.csv', 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
+            writer.writerows(all_rows)
+        print(f"Edytowano wydatek (ID: {ID})")
 
 
 def main():
@@ -116,6 +146,13 @@ def main():
     delete_parser = subparsers.add_parser('usun', help='Usun istniejacy wydatek')
     delete_parser.add_argument('-i', '--id', type=int, required=True, help='ID wydatku do usuniecia')
 
+    edit_parser = subparsers.add_parser('edytuj', help='Edytuj wydatek')
+    edit_parser.add_argument('-i', '--id', type=int, required=True, help='ID wydatku do edycji')
+    edit_parser.add_argument('-o', '--opis', type=str, help='Nowy opis wydatku')
+    edit_parser.add_argument('-k', '--kwota', type=float, help='Nowa kwota wydatku')
+    edit_parser.add_argument('-d', '--data', help='Nowa data wydatku (YYYY-MM-DD)')
+    edit_parser.add_argument('--kategoria', help='Nowy kategoria wydatku')
+
     args = parser.parse_args()
 
     if args.mode == 'dodaj':
@@ -126,6 +163,9 @@ def main():
 
     if args.mode == 'usun':
         delete_expense(args)
+
+    if args.mode == 'edytuj':
+        edit_expense(args)
 
     if not args.mode:
         parser.print_help()
