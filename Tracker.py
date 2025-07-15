@@ -1,9 +1,6 @@
 import argparse
 import datetime
 import csv
-import sys
-from operator import index
-
 import tabulate
 import os
 
@@ -178,7 +175,7 @@ def refine_statistics(statistics, category):
     return statistics
 
 def summarize_expenses(args):
-    #category = args.kategoria
+    category = args.kategoria
     month = args.miesiac
     year = args.rok
 
@@ -197,28 +194,36 @@ def summarize_expenses(args):
         data = [row for row in all_rows if row[1].startswith(year)]
 
     if data:
-
-        overall_statistics = calculate_expense_stats(data)
-        print("1. Ogólne informacje:")
-        print(f"\u2022 Całkowita liczba wydatków: {overall_statistics[0]}")
-        print(f"\u2022 Suma wszystkich wydatków: {overall_statistics[1]} zł")
-        print(f"\u2022 Średni wydatek: {overall_statistics[2]} zł")
-        print(f"\u2022 Najwyższy wydatek: {overall_statistics[3]} zł")
-        print(f"\u2022 Najniższy wydatek: {overall_statistics[4]} zł")
-        statistics_food = refine_statistics(calculate_expense_stats(data, "Jedzenie"), "Jedzenie")
-        statistics_shopping = refine_statistics(calculate_expense_stats(data, "Zakupy"), "Zakupy")
-        statistics_transport = refine_statistics(calculate_expense_stats(data, "Transport"), "Transport")
-        statistics_entertainment = refine_statistics(calculate_expense_stats(data, "Rozrywka"), "Rozrywka")
-        statistics_other = refine_statistics(calculate_expense_stats(data, "Inne"), "Inne")
-        category_statistics = [
-            statistics_food,
-            statistics_shopping,
-            statistics_transport,
-            statistics_entertainment,
-            statistics_other,
-        ]
-        print("2. Podsumowanie po kategoriach:")
-        print(tabulate.tabulate(category_statistics, headers=["Kategoria", "Wydatki", "Suma", "Średnia"], tablefmt="github", numalign="center"))
+        if category == None:
+            overall_statistics = calculate_expense_stats(data)
+            print("1. Ogólne informacje:")
+            print(f"\u2022 Całkowita liczba wydatków: {overall_statistics[0]}")
+            print(f"\u2022 Suma wszystkich wydatków: {overall_statistics[1]:.2f} zł")
+            print(f"\u2022 Średni wydatek: {overall_statistics[2]:.2f} zł")
+            print(f"\u2022 Najwyższy wydatek: {overall_statistics[3]:.2f} zł")
+            print(f"\u2022 Najniższy wydatek: {overall_statistics[4]:.2f} zł")
+            statistics_food = refine_statistics(calculate_expense_stats(data, "Jedzenie"), "Jedzenie")
+            statistics_shopping = refine_statistics(calculate_expense_stats(data, "Zakupy"), "Zakupy")
+            statistics_transport = refine_statistics(calculate_expense_stats(data, "Transport"), "Transport")
+            statistics_entertainment = refine_statistics(calculate_expense_stats(data, "Rozrywka"), "Rozrywka")
+            statistics_other = refine_statistics(calculate_expense_stats(data, "Inne"), "Inne")
+            category_statistics = [
+                statistics_food,
+                statistics_shopping,
+                statistics_transport,
+                statistics_entertainment,
+                statistics_other,
+            ]
+            print("2. Podsumowanie po kategoriach:")
+            print(tabulate.tabulate(category_statistics, headers=["Kategoria", "Wydatki", "Suma", "Średnia"], tablefmt="github", numalign="center"))
+        else:
+            statistics_filter_category = calculate_expense_stats(data, category)
+            print(f"Ogólne informacje dla kategorii {category}:")
+            print(f"\u2022 Całkowita liczba wydatków: {statistics_filter_category[0]}")
+            print(f"\u2022 Suma wszystkich wydatków: {statistics_filter_category[1]:.2f} zł")
+            print(f"\u2022 Średni wydatek: {statistics_filter_category[2]:.2f} zł")
+            print(f"\u2022 Najwyższy wydatek: {statistics_filter_category[3]:.2f} zł")
+            print(f"\u2022 Najniższy wydatek: {statistics_filter_category[4]:.2f} zł")
     else:
         print("Brak wydatków w podanym okresie czasowym")
 
@@ -251,7 +256,7 @@ def main():
     edit_parser.add_argument('--kategoria', help='Nowa kategoria wydatku')
 
     summary_parser = subparsers.add_parser('podsumowanie', help='Podsumowanie wydatków')
-    #summary_parser.add_argument('-k' ,'--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka'], help='Kategoria wydatków do podsumowania')
+    summary_parser.add_argument('-k' ,'--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka'], help='Kategoria wydatków do podsumowania')
     summary_parser.add_argument('-m', '--miesiac', type=str, help='Miesiac wydatków do podsumowania (MM)')
     summary_parser.add_argument('-r', '--rok', type=str, help='Rok wydatków do podsumowania (YYYY)')
     summary_parser.add_argument('--data-od', help='Data początkowa wydatków do podsumowania (YYYY-MM-DD)')
