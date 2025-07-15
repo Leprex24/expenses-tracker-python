@@ -34,17 +34,17 @@ def add_expense(args):
     amount = args.kwota
     category = args.kategoria
 
-    if ID == None:
+    if ID is None:
         with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             next(reader)
             ID_list = [int(row[0]) for row in reader if row[0] != 'ID']
             ID = max(ID_list, default=0)+1
 
-    if date == None:
+    if date is None:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    if category == None:
+    if category is None:
         category = "Zakupy"
 
     with open('wydatki.csv', 'a', newline='', encoding='utf-8') as csvfile:
@@ -54,28 +54,26 @@ def add_expense(args):
     print(f"Dodano nowy wydatek (ID: {ID})")
 
 def filter_by_date(args, all_rows):
-    if args.mode == "wypisz":
-        date = args.data
-        if date != None:
-            data = [row for row in all_rows if row[1] == date]
-
     date_from = args.data_od
     date_to = args.data_do
 
-    if date_from == None and date_to == None:
+    if date_from is None and date_to is None:
         data = all_rows
-    elif date_from == None and date_to != None:
+    elif date_from is None and date_to is not None:
         data = [row for row in all_rows if row[1] <= date_to]
-    elif date_from != None and date_to == None:
+    elif date_from is not None and date_to is None:
         data = [row for row in all_rows if row[1] >= date_from]
     else:
-        data = [row for row in all_rows if row[1] >= date_from and row[1] <= date_to]
-
+        data = [row for row in all_rows if date_from <= row[1] <= date_to]
+    if args.mode == "wypisz":
+        date = args.data
+        if date is not None:
+            data = [row for row in all_rows if row[1] == date]
     return data
 
 def list_expenses(args):
     category = args.kategoria
-    sum = 0
+    sum_of_expenses = 0
     with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
@@ -85,15 +83,15 @@ def list_expenses(args):
         return
     data = filter_by_date(args, all_rows)
 
-    if category != None:
+    if category is not None:
         data = [row for row in data if row[4] == category]
 
     for row in data:
-        sum += float(row[3])
+        sum_of_expenses += float(row[3])
 
     if data:
         print(tabulate.tabulate(data, headers=['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'], tablefmt="github", numalign="center"))
-        print(f"Suma: {sum:.2f} zł")
+        print(f"Suma: {sum_of_expenses:.2f} zł")
     else:
         print("Brak wydatków do wyświetlenia")
 
@@ -129,13 +127,13 @@ def edit_expense(args):
         print(f"Nie można edytowac wydatku o ID: {ID}, ponieważ takowy nie istnieje!")
     else:
         row_index = ID_list.index(ID)
-        if date != None:
+        if date is not None:
             all_rows[row_index][1] = date
-        if description != None:
+        if description is not None:
             all_rows[row_index][2] = description
-        if amount != None:
+        if amount is not None:
             all_rows[row_index][3] = amount
-        if category != None:
+        if category is not None:
             all_rows[row_index][4] = category
         with open('wydatki.csv', 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
@@ -145,7 +143,7 @@ def edit_expense(args):
 
 def calculate_expense_stats(data, category=None):
     sum_of_expenses = 0
-    if category != None:
+    if category is not None:
         data = [row for row in data if row[4] == category]
     number_of_expenses = len(data)
     if number_of_expenses == 0:
@@ -188,13 +186,13 @@ def summarize_expenses(args):
         return
     data = filter_by_date(args, all_rows)
 
-    if month != None:
+    if month is not None:
         data = [row for row in all_rows if row[1].startswith(year + "-" + month)]
-    elif year != None:
+    elif year is not None:
         data = [row for row in all_rows if row[1].startswith(year)]
 
     if data:
-        if category == None:
+        if category is None:
             overall_statistics = calculate_expense_stats(data)
             print("1. Ogólne informacje:")
             print(f"\u2022 Całkowita liczba wydatków: {overall_statistics[0]}")
