@@ -71,8 +71,20 @@ def filter_by_date(args, all_rows):
             data = [row for row in all_rows if row[1] == date]
     return data
 
+def sort_expenses(data, sort_by, reverse):
+    key_map = {
+        'ID': lambda x: int(x[0]),
+        'Data': lambda x: x[1],
+        'Kwota': lambda x: float(x[3]),
+        'Kategoria': lambda x: x[4]
+    }
+    data.sort(key=key_map[sort_by], reverse=reverse)
+    return data
+
 def list_expenses(args):
     category = args.kategoria
+    sort_by = args.sortuj_po
+    reverse = args.malejaco
     sum_of_expenses = 0
     with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
@@ -85,6 +97,8 @@ def list_expenses(args):
 
     if category is not None:
         data = [row for row in data if row[4] == category]
+
+    data = sort_expenses(data, sort_by, reverse)
 
     for row in data:
         sum_of_expenses += float(row[3])
@@ -242,6 +256,8 @@ def main():
     list_parser.add_argument('--data-od', help='Data początkowa wyświetlanych wydatków (YYYY-MM-DD)')
     list_parser.add_argument('--data-do', help='Data końcowa wyświetlanych wydatków (YYYY-MM-DD)')
     list_parser.add_argument('--data', help='Konkretna data wyświetlanych wydatków (YYYY-MM-DD)')
+    list_parser.add_argument('-s', '--sortuj-po', choices=['ID', 'Data', 'Kwota', 'Kategoria'], help='Sortowanie wydatków, domuślnie ID', default='ID')
+    list_parser.add_argument('--malejaco', action='store_true', help='Sortuj malejąco, domyślnie rosnąco')
 
     delete_parser = subparsers.add_parser('usun', help='Usuń istniejący wydatek')
     delete_parser.add_argument('-i', '--id', type=int, required=True, help='ID wydatku do usunięcia')
