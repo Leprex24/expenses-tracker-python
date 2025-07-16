@@ -14,32 +14,32 @@ def file_verification(file_name='wydatki.csv'):
         with open(file_name, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             header = next(reader)
-            expected_columns = ['ID', 'Data', 'Opis', 'Kwota', 'Kategoria']
-            if header == expected_columns:
-                print(f"Plik {file_name} już istnieje w poprawnym formacie")
-            else:
-                override = int(input(f"Plik {file_name} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
-                while override != 1 and override != 0:
-                    override = int(input("Podano złą wartość spróbuj jeszcze raz:"))
-                if override == 1:
-                    with open(file_name, 'w', newline='', encoding='utf-8') as csvfile:
-                        writer = csv.writer(csvfile)
-                        writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-                    print(f"Nadpisano plik: {file_name}")
+        expected_columns = ['ID', 'Data', 'Opis', 'Kwota', 'Kategoria']
+        if header == expected_columns:
+            print(f"Plik {file_name} już istnieje w poprawnym formacie")
+        else:
+            override = int(input(f"Plik {file_name} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
+            while override != 1 and override != 0:
+                override = int(input("Podano złą wartość spróbuj jeszcze raz:"))
+            if override == 1:
+                with open(file_name, 'w', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
+                print(f"Nadpisano plik: {file_name}")
 
 def add_expense(args):
-    ID = args.id
+    expense_id = args.id
     date = args.data
     description = args.opis
     amount = args.kwota
     category = args.kategoria
 
-    if ID is None:
+    if expense_id is None:
         with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             next(reader)
-            ID_list = [int(row[0]) for row in reader if row[0] != 'ID']
-            ID = max(ID_list, default=0)+1
+            id_list = [int(row[0]) for row in reader if row[0] != 'ID']
+            expense_id = max(id_list, default=0)+1
 
     if date is None:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -49,9 +49,9 @@ def add_expense(args):
 
     with open('wydatki.csv', 'a', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([ID, date, description, amount, category])
+        writer.writerow([expense_id, date, description, amount, category])
 
-    print(f"Dodano nowy wydatek (ID: {ID})")
+    print(f"Dodano nowy wydatek (ID: {expense_id})")
 
 def filter_by_date(args, all_rows):
     date_from = args.data_od
@@ -110,24 +110,24 @@ def list_expenses(args):
         print("Brak wydatków do wyświetlenia")
 
 def delete_expense(args):
-    ID = args.id
+    expense_id = args.id
     with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
         all_rows = list(reader)
-        ID_list = [int(row[0]) for row in all_rows]
-    if ID not in ID_list:
-        print(f"Nie można usunać wydatku o ID: {ID}, ponieważ takowy nie istnieje!")
+        id_list = [int(row[0]) for row in all_rows]
+    if expense_id not in id_list:
+        print(f"Nie można usunać wydatku o ID: {expense_id}, ponieważ takowy nie istnieje!")
     else:
-        all_rows = [row for row in all_rows if int(row[0]) != ID]
+        all_rows = [row for row in all_rows if int(row[0]) != expense_id]
         with open('wydatki.csv', 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
             writer.writerows(all_rows)
-        print(f"Usunięto wydatek (ID: {ID})")
+        print(f"Usunięto wydatek (ID: {expense_id})")
 
 def edit_expense(args):
-    ID = args.id
+    expense_id = args.id
     date = args.data
     description = args.opis
     amount = args.kwota
@@ -136,11 +136,11 @@ def edit_expense(args):
         reader = csv.reader(csvfile)
         next(reader)
         all_rows = list(reader)
-        ID_list = [int(row[0]) for row in all_rows]
-    if ID not in ID_list:
-        print(f"Nie można edytowac wydatku o ID: {ID}, ponieważ takowy nie istnieje!")
+        id_list = [int(row[0]) for row in all_rows]
+    if expense_id not in id_list:
+        print(f"Nie można edytowac wydatku o ID: {expense_id}, ponieważ takowy nie istnieje!")
     else:
-        row_index = ID_list.index(ID)
+        row_index = id_list.index(expense_id)
         if date is not None:
             all_rows[row_index][1] = date
         if description is not None:
@@ -153,7 +153,7 @@ def edit_expense(args):
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
             writer.writerows(all_rows)
-        print(f"Edytowano wydatek (ID: {ID})")
+        print(f"Edytowano wydatek (ID: {expense_id})")
 
 def calculate_expense_stats(data, category=None):
     sum_of_expenses = 0
