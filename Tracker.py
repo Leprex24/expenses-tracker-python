@@ -27,6 +27,36 @@ def file_verification(file_name='wydatki.csv'):
                     writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
                 print(f"Nadpisano plik: {file_name}")
 
+def validate_date(date):
+    if date is None:
+        return True
+    else:
+        try:
+            datetime.datetime.strptime(date, "%Y-%m-%d")
+            return True
+        except ValueError:
+            return False
+
+def validate_year(year):
+    if year is None:
+        return True
+    else:
+        try:
+            datetime.datetime.strptime(year, "%Y")
+            return True
+        except ValueError:
+            return False
+
+def validate_month(month):
+    if month is None:
+        return True
+    else:
+        try:
+            datetime.datetime.strptime(month, "%m")
+            return True
+        except ValueError:
+            return False
+
 def add_expense(args):
     expense_id = args.id
     date = args.data
@@ -279,7 +309,10 @@ def main():
     args = parser.parse_args()
 
     if args.mode == 'dodaj':
-        add_expense(args)
+        if validate_date(args.data):
+            add_expense(args)
+        else:
+            parser.error("Podano nieprawidłową datę")
 
     if args.mode == 'wypisz':
         if args.data and args.data_od:
@@ -289,13 +322,19 @@ def main():
         elif args.data_do and args.data_od and args.data_do < args.data_od:
             parser.error("--data-do nie może być wcześniejsza niż --data-od")
         else:
-            list_expenses(args)
+            if validate_date(args.data) and validate_date(args.data_do) and validate_date(args.data_od):
+                list_expenses(args)
+            else:
+                parser.error("Podano nieprawidłową datę")
 
     if args.mode == 'usun':
         delete_expense(args)
 
     if args.mode == 'edytuj':
-        edit_expense(args)
+        if validate_date(args.data):
+            edit_expense(args)
+        else:
+            parser.error("Podano nieprawidłową datę")
 
     if args.mode == 'podsumowanie':
         if args.miesiac and not args.rok:
@@ -305,7 +344,10 @@ def main():
         elif (args.miesiac or args.rok) and (args.data_od or args.data_do):
             parser.error("--miesiac i --rok nie mogą być używane jednocześnie z --data-od i --data-do")
         else:
-            summarize_expenses(args)
+            if validate_date(args.data_od) and validate_date(args.data_do) and validate_year(args.rok) and validate_month(args.miesiac):
+                summarize_expenses(args)
+            else:
+                parser.error("Podano nieprawidłową datę")
 
 
     if not args.mode:
