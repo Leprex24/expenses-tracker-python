@@ -30,32 +30,79 @@ def file_verification(file_name='wydatki.csv'):
 def validate_date(date):
     if date is None:
         return True
-    else:
-        try:
-            datetime.datetime.strptime(date, "%Y-%m-%d")
-            return True
-        except ValueError:
-            return False
+    try:
+        datetime.datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
 
 def validate_year(year):
     if year is None:
         return True
-    else:
-        try:
-            datetime.datetime.strptime(year, "%Y")
-            return True
-        except ValueError:
-            return False
+    try:
+        datetime.datetime.strptime(year, "%Y")
+        return True
+    except ValueError:
+        return False
 
 def validate_month(month):
     if month is None:
         return True
+    try:
+        datetime.datetime.strptime(month, "%m")
+        return True
+    except ValueError:
+        return False
+
+def validate_id(expense_id):
+    if expense_id is None:
+        return True
+    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)
+        id_list = [int(row[0]) for row in reader if row[0] != 'ID']
+    if expense_id not in id_list:
+        return True
     else:
-        try:
-            datetime.datetime.strptime(month, "%m")
-            return True
-        except ValueError:
-            return False
+        return False
+
+def validate_add(args):
+    if not validate_date(args.data):
+        return False, "Podano nieprawidłową datę"
+    if not validate_id(args.id):
+        return False, "Podano już istniejące ID"
+    return True, None
+
+def validate_list(args):
+    if args.data and (args.data_od or args.data_do):
+        return False, "--data nie może być używana z --data-od lub --data-do"
+    for data in [args.data_od, args.data_do, args.data]:
+        if data and not validate_date(data):
+            return False, "Podano nieprawidłową datę"
+    if args.data_do and args.data_od and args.data_do < args.data_od:
+        return False, "--data-do nie może być wcześniejsza niż --data-od"
+    return True, None
+
+def validate_edit(args):
+    if not validate_date(args.data):
+        return False, "Podano nieprawidłową datę"
+    return True, None
+
+def validate_summary(args):
+    if args.miesiac and not args.rok:
+        return False, "Aby wyświetlić podsumowanie konkretnego miesiąca musisz podać --rok"
+    if args.data_do and args.data_od and args.data_do < args.data_od:
+        return False, "--data-do nie może być wcześniejsza niż --data-od"
+    if (args.miesiac or args.rok) and (args.data_do or args.data_od):
+        return False, "--miesiac i --rok nie mogą być używane jednocześnie z --data-od i --data-do"
+    for date in [args.data_do, args.data_od]:
+        if date and not validate_date(date):
+            return False, "Podano nieprawidłową datę"
+    if args.rok and not validate_year(args.rok):
+        return False, "Podano nieprawidłowy rok"
+    if args.miesiac and not validate_month(args.miesiac):
+        return False, "Podano nieprawidłowy miesiąc"
+    return True, None
 
 def add_expense(args):
     expense_id = args.id
@@ -278,7 +325,7 @@ def main():
     add_parser.add_argument('-o', '--opis', type=str, required=True ,help='Opis wydatku')
     add_parser.add_argument('-k', '--kwota', type=float, required=True, help='Kwota wydatku')
     add_parser.add_argument('--data', help='Niestandardowa data (YYYY-MM-DD), domyślnie data dzisiejsza')
-    add_parser.add_argument('--id', help='Niestandardowe ID')
+    add_parser.add_argument('--id', type=int, help='Niestandardowe ID')
     add_parser.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne' ], help='Kategoria wydatku, domyślnie zakupy')
 
     list_parser = subparsers.add_parser('wypisz', help='Wypisz wszystkie wydatki')
@@ -297,7 +344,7 @@ def main():
     edit_parser.add_argument('-o', '--opis', type=str, help='Nowy opis wydatku')
     edit_parser.add_argument('-k', '--kwota', type=float, help='Nowa kwota wydatku')
     edit_parser.add_argument('-d', '--data', help='Nowa data wydatku (YYYY-MM-DD)')
-    edit_parser.add_argument('--kategoria', help='Nowa kategoria wydatku')
+    edit_parser.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne' ], help='Nowa kategoria wydatku')
 
     summary_parser = subparsers.add_parser('podsumowanie', help='Podsumowanie wydatków')
     summary_parser.add_argument('-k' ,'--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka'], help='Kategoria wydatków do podsumowania')
@@ -308,49 +355,29 @@ def main():
 
     args = parser.parse_args()
 
+    validators = {
+        'dodaj': validate_add,
+        'wypisz': validate_list,
+        'edytuj': validate_edit,
+        'podsumowanie': validate_summary,
+    }
+
+    if args.mode in validators:
+        valid, error_msg = validators[args.mode](args)
+        if not valid:
+            parser.error(error_msg)
+
     if args.mode == 'dodaj':
-        if validate_date(args.data):
-            add_expense(args)
-        else:
-            parser.error("Podano nieprawidłową datę")
-
-    if args.mode == 'wypisz':
-        if args.data and args.data_od:
-            parser.error("--data nie może być używana z --data-od")
-        elif args.data and args.data_do:
-            parser.error("--data nie może być używana z --data-do")
-        elif args.data_do and args.data_od and args.data_do < args.data_od:
-            parser.error("--data-do nie może być wcześniejsza niż --data-od")
-        else:
-            if validate_date(args.data) and validate_date(args.data_do) and validate_date(args.data_od):
-                list_expenses(args)
-            else:
-                parser.error("Podano nieprawidłową datę")
-
-    if args.mode == 'usun':
+        add_expense(args)
+    elif args.mode == 'wypisz':
+        list_expenses(args)
+    elif args.mode == 'usun':
         delete_expense(args)
-
-    if args.mode == 'edytuj':
-        if validate_date(args.data):
-            edit_expense(args)
-        else:
-            parser.error("Podano nieprawidłową datę")
-
-    if args.mode == 'podsumowanie':
-        if args.miesiac and not args.rok:
-            parser.error("Aby wyświetlić podsumowanie konkretnego miesiąca musisz podać --rok")
-        elif args.data_do and args.data_od and args.data_do < args.data_od:
-            parser.error("--data-do nie może być wcześniejsza niż --data-od")
-        elif (args.miesiac or args.rok) and (args.data_od or args.data_do):
-            parser.error("--miesiac i --rok nie mogą być używane jednocześnie z --data-od i --data-do")
-        else:
-            if validate_date(args.data_od) and validate_date(args.data_do) and validate_year(args.rok) and validate_month(args.miesiac):
-                summarize_expenses(args)
-            else:
-                parser.error("Podano nieprawidłową datę")
-
-
-    if not args.mode:
+    elif args.mode == 'edytuj':
+        edit_expense(args)
+    elif args.mode == 'podsumowanie':
+        summarize_expenses(args)
+    else:
         parser.print_help()
 
 if __name__ == '__main__':
