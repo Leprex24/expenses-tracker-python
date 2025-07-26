@@ -27,6 +27,12 @@ def file_verification(file_name='wydatki.csv'):
                     writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
                 print(f"Nadpisano plik: {file_name}")
 
+def get_all_expenses():
+    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)
+        return list(reader)
+
 def validate_date(date):
     if date is None:
         return True
@@ -54,22 +60,16 @@ def validate_month(month):
     except ValueError:
         return False
 
-def validate_id(expense_id):
-    if expense_id is None:
-        return True
-    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        id_list = [int(row[0]) for row in reader if row[0] != 'ID']
-    if expense_id not in id_list:
-        return True
-    else:
-        return False
+def id_exists(expense_id, rows=None):
+    if rows is None:
+        rows = get_all_expenses()
+    id_list = [int(row[0]) for row in rows]
+    return expense_id in id_list
 
 def validate_add(args):
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
-    if not validate_id(args.id):
+    if id_exists(args.id):
         return False, "Podano już istniejące ID"
     return True, None
 
@@ -83,9 +83,15 @@ def validate_list(args):
         return False, "--data-do nie może być wcześniejsza niż --data-od"
     return True, None
 
+def validate_delete(args):
+    if not id_exists(args.id):
+        return False, f"Wydatek o ID: {args.id} nie istnieje"
+
 def validate_edit(args):
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
+    if not id_exists(args.id):
+        return False, f"Wydatek o ID: {args.id} nie istnieje"
     return True, None
 
 def validate_summary(args):
@@ -163,10 +169,7 @@ def list_expenses(args):
     sort_by = args.sortuj_po
     reverse = args.malejaco
     sum_of_expenses = 0
-    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        all_rows = list(reader)
+    all_rows = get_all_expenses()
     if not all_rows:
         print("Nie dodano jeszcze żadnych wydatków")
         return
@@ -188,20 +191,14 @@ def list_expenses(args):
 
 def delete_expense(args):
     expense_id = args.id
-    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        all_rows = list(reader)
-        id_list = [int(row[0]) for row in all_rows]
-    if expense_id not in id_list:
-        print(f"Nie można usunać wydatku o ID: {expense_id}, ponieważ takowy nie istnieje!")
-    else:
-        all_rows = [row for row in all_rows if int(row[0]) != expense_id]
-        with open('wydatki.csv', 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-            writer.writerows(all_rows)
-        print(f"Usunięto wydatek (ID: {expense_id})")
+    all_rows = get_all_expenses()
+    id_list = [int(row[0]) for row in all_rows]
+    all_rows = [row for row in all_rows if int(row[0]) != expense_id]
+    with open('wydatki.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
+        writer.writerows(all_rows)
+    print(f"Usunięto wydatek (ID: {expense_id})")
 
 def edit_expense(args):
     expense_id = args.id
@@ -209,28 +206,22 @@ def edit_expense(args):
     description = args.opis
     amount = args.kwota
     category = args.kategoria
-    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        all_rows = list(reader)
-        id_list = [int(row[0]) for row in all_rows]
-    if expense_id not in id_list:
-        print(f"Nie można edytowac wydatku o ID: {expense_id}, ponieważ takowy nie istnieje!")
-    else:
-        row_index = id_list.index(expense_id)
-        if date is not None:
-            all_rows[row_index][1] = date
-        if description is not None:
-            all_rows[row_index][2] = description
-        if amount is not None:
-            all_rows[row_index][3] = amount
-        if category is not None:
-            all_rows[row_index][4] = category
-        with open('wydatki.csv', 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-            writer.writerows(all_rows)
-        print(f"Edytowano wydatek (ID: {expense_id})")
+    all_rows = get_all_expenses()
+    id_list = [int(row[0]) for row in all_rows]
+    row_index = id_list.index(expense_id)
+    if date is not None:
+        all_rows[row_index][1] = date
+    if description is not None:
+        all_rows[row_index][2] = description
+    if amount is not None:
+        all_rows[row_index][3] = amount
+    if category is not None:
+        all_rows[row_index][4] = category
+    with open('wydatki.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
+        writer.writerows(all_rows)
+    print(f"Edytowano wydatek (ID: {expense_id})")
 
 def calculate_expense_stats(data, category=None):
     sum_of_expenses = 0
@@ -268,10 +259,7 @@ def summarize_expenses(args):
     month = args.miesiac
     year = args.rok
 
-    with open('wydatki.csv', 'r', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)
-        all_rows = list(reader)
+    all_rows = get_all_expenses()
     if not all_rows:
         print("Nie można pokazać podsumowania, ponieważ nie dodano jeszcze żadnych wydatków")
         return
@@ -358,6 +346,7 @@ def main():
     validators = {
         'dodaj': validate_add,
         'wypisz': validate_list,
+        'usun': validate_delete,
         'edytuj': validate_edit,
         'podsumowanie': validate_summary,
     }
