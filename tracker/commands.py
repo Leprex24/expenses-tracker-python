@@ -1,9 +1,8 @@
-import csv
 import datetime
 import os
 import tabulate
 
-from tracker.file_ops import get_all_expenses
+from tracker.file_ops import get_all_expenses, write_all_expenses, add_new_expense
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,11 +16,9 @@ def add_expense(args):
     category = args.kategoria
 
     if expense_id is None:
-        with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-            next(reader)
-            id_list = [int(row[0]) for row in reader if row[0] != 'ID']
-            expense_id = max(id_list, default=0)+1
+        all_expenses = get_all_expenses()
+        id_list = [int(row[0]) for row in all_expenses if row[0] != 'ID']
+        expense_id = max(id_list, default=0)+1
 
     if date is None:
         date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -29,9 +26,7 @@ def add_expense(args):
     if category is None:
         category = "Zakupy"
 
-    with open(CSV_PATH, 'a', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([expense_id, date, description, amount, category])
+    add_new_expense(expense_id, date, description, amount, category)
 
     print(f"Dodano nowy wydatek (ID: {expense_id})")
 
@@ -64,10 +59,7 @@ def delete_expense(args):
     expense_id = args.id
     all_rows = get_all_expenses()
     all_rows = [row for row in all_rows if int(row[0]) != expense_id]
-    with open(CSV_PATH, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-        writer.writerows(all_rows)
+    write_all_expenses(all_rows)
     print(f"Usunięto wydatek (ID: {expense_id})")
 
 def edit_expense(args):
@@ -87,10 +79,7 @@ def edit_expense(args):
         all_rows[row_index][3] = amount
     if category is not None:
         all_rows[row_index][4] = category
-    with open(CSV_PATH, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-        writer.writerows(all_rows)
+    write_all_expenses(all_rows)
     print(f"Edytowano wydatek (ID: {expense_id})")
 
 def summarize_expenses(args):

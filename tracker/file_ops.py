@@ -32,3 +32,14 @@ def get_all_expenses():
         reader = csv.reader(csvfile)
         next(reader)
         return list(reader)
+
+def write_all_expenses(all_rows):
+    with open(CSV_PATH, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
+        writer.writerows(all_rows)
+
+def add_new_expense(expense_id, date, description, amount, category):
+    with open(CSV_PATH, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([expense_id, date, description, amount, category])
