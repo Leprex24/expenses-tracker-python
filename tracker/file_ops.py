@@ -1,8 +1,11 @@
 import csv
 import os
+import shutil
+from datetime import datetime
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(PROJECT_ROOT, 'wydatki.csv')
+BACKUP_PATH = os.path.join(PROJECT_ROOT, 'backups')
 
 def file_verification():
     if not os.path.exists(CSV_PATH):
@@ -43,3 +46,22 @@ def add_new_expense(expense_id, date, description, amount, category):
     with open(CSV_PATH, 'a', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([expense_id, date, description, amount, category])
+
+def create_backup():
+    os.makedirs(BACKUP_PATH, exist_ok=True)
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+    backup_filename = f"wydatki_backup_{timestamp}.csv"
+    backup_fullpath = os.path.join(BACKUP_PATH, backup_filename)
+    shutil.copyfile(CSV_PATH, backup_fullpath)
+    print(f"Utworzono kopie zapasową: {backup_fullpath}")
+    delete_old_backups()
+
+def delete_old_backups():
+    backups = [f for f in os.listdir(BACKUP_PATH) if f.startswith("wydatki_backup") and f.endswith(".csv")]
+    if len(backups) > 20:
+        backups.sort()
+        num_to_delete = len(backups) - 20
+        for old_backup in backups[:num_to_delete]:
+            backup_for_removal = os.path.join(BACKUP_PATH, old_backup)
+            os.remove(backup_for_removal)

@@ -1,14 +1,11 @@
 import datetime
-import os
 import tabulate
 
-from tracker.file_ops import get_all_expenses, write_all_expenses, add_new_expense
+from tracker.file_ops import get_all_expenses, write_all_expenses, add_new_expense, create_backup
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CSV_PATH = os.path.join(PROJECT_ROOT, 'wydatki.csv')
-
 def add_expense(args):
+    create_backup()
     expense_id = args.id
     date = args.data
     description = args.opis
@@ -56,6 +53,7 @@ def list_expenses(args):
         print("Brak wydatków do wyświetlenia")
 
 def delete_expense(args):
+    create_backup()
     expense_id = args.id
     all_rows = get_all_expenses()
     all_rows = [row for row in all_rows if int(row[0]) != expense_id]
@@ -63,6 +61,7 @@ def delete_expense(args):
     print(f"Usunięto wydatek (ID: {expense_id})")
 
 def edit_expense(args):
+    create_backup()
     expense_id = args.id
     date = args.data
     description = args.opis
