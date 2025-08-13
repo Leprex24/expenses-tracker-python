@@ -1,6 +1,6 @@
 import datetime
 
-from tracker.utils import id_exists
+from tracker.utils import id_exists, id_exists_recurring
 
 
 def validate_date(date):
@@ -73,4 +73,26 @@ def validate_summary(args):
         return False, "Podano nieprawidłowy rok"
     if args.miesiac and not validate_month(args.miesiac):
         return False, "Podano nieprawidłowy miesiąc"
+    return True, None
+
+def validate_recurring_edit(args):
+    if not validate_date(args.data):
+        return False, "Podano nieprawidłową datę"
+    if not id_exists_recurring(args.id):
+        return False, f"Wydatek cykliczny o id {args.id} nie istnieje"
+    return True, None
+
+def validate_recurring_add(args):
+    if not validate_date(args.data):
+        return False, "Podano nieprawidłową datę"
+    if id_exists_recurring(args.id):
+        return False, "Podano już istniejące ID"
+    return True, None
+
+def validate_recurring_delete(args):
+    if not id_exists_recurring(args.id):
+        return False, f"Wydatek cykliczny o ID: {args.id} nie istnieje"
+    return True, None
+
+def validate_recurring_list(args):
     return True, None
