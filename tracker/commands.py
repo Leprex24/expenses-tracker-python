@@ -4,7 +4,7 @@ import tabulate
 from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add_new_expense_main, create_backup, \
     add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics, get_due_dates, \
-    find_last_due_date, date_to_string, already_exists
+    find_last_due_date, date_to_string, already_exists, filter_by_amount
 
 
 def add_expense(args):
@@ -40,7 +40,7 @@ def list_expenses(args):
         print("Nie dodano jeszcze żadnych wydatków")
         return
     data = filter_by_date(args, all_rows)
-
+    data = filter_by_amount(args, data)
     if category is not None:
         data = [row for row in data if row[4] == category]
 
@@ -94,6 +94,7 @@ def summarize_expenses(args):
         print("Nie można pokazać podsumowania, ponieważ nie dodano jeszcze żadnych wydatków")
         return
     data = filter_by_date(args, all_rows)
+    data = filter_by_amount(args, data)
 
     if month is not None:
         data = [row for row in all_rows if row[1].startswith(year + "-" + month)]
@@ -167,7 +168,7 @@ def list_recurring_expenses(args):
     if not all_rows:
         print("Nie dodano jeszcze żadnych wydatków")
         return
-    data = all_rows
+    data = filter_by_amount(args, all_rows)
 
     if category is not None:
         data = [row for row in data if row[4] == category]

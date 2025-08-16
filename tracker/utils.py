@@ -29,9 +29,23 @@ def filter_by_date(args, all_rows):
     else:
         data = [row for row in all_rows if date_from <= row[1] <= date_to]
     if args.mode == "wypisz":
-        date = args.data
-        if date is not None:
-            data = [row for row in all_rows if row[1] == date]
+        d = args.data
+        if d is not None:
+            data = [row for row in all_rows if row[1] == d]
+    return data
+
+def filter_by_amount(args, all_rows):
+    amount_min = args.kwota_od
+    amount_max = args.kwota_do
+
+    if amount_min is None and amount_max is None:
+        data = all_rows
+    elif amount_min is not None and amount_max is None:
+        data = [row for row in all_rows if float(row[3]) >= amount_min]
+    elif amount_min is None and amount_max is not None:
+        data = [row for row in all_rows if float(row[3]) <= amount_max]
+    else:
+        data = [row for row in all_rows if amount_min <= float(row[3]) <= amount_max]
     return data
 
 def sort_expenses(data, sort_by, reverse):

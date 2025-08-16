@@ -27,6 +27,8 @@ def main():
     list_parser.add_argument('--data', help='Konkretna data wyświetlanych wydatków (YYYY-MM-DD)')
     list_parser.add_argument('-s', '--sortuj-po', choices=['ID', 'Data', 'Kwota', 'Kategoria'], help='Sortowanie wydatków, domyślnie ID', default='ID')
     list_parser.add_argument('--malejaco', action='store_true', help='Sortuj malejąco, domyślnie rosnąco')
+    list_parser.add_argument('--kwota-od', type=float ,help='Minimalna kwota wyświetlanych wydatków')
+    list_parser.add_argument('--kwota-do', type=float ,help='Maksymalna kwota wyświetlanych wydatków')
 
     delete_parser = subparsers.add_parser('usun', help='Usuń istniejący wydatek')
     delete_parser.add_argument('-i', '--id', type=int, required=True, help='ID wydatku do usunięcia')
@@ -44,6 +46,8 @@ def main():
     summary_parser.add_argument('-r', '--rok', type=str, help='Rok wydatków do podsumowania (YYYY)')
     summary_parser.add_argument('--data-od', help='Data początkowa wydatków do podsumowania (YYYY-MM-DD)')
     summary_parser.add_argument('--data-do', help='Data końcowa wydatków do podsumowania (YYYY-MM-DD)')
+    summary_parser.add_argument('--kwota-od', type=float ,help='Minimalna kwota wyświetlanych wydatków')
+    summary_parser.add_argument('--kwota-do', type=float ,help='Maksymalna kwota wyświetlanych wydatków')
 
     recurring_parser = subparsers.add_parser('cykliczne', help="Zarządzaj wydatkami cyklicznymi")
     recurring_subparsers = recurring_parser.add_subparsers(dest="recurring_mode")
@@ -61,6 +65,8 @@ def main():
     recurring_list.add_argument('--czestotliwosc', choices=['Codzienne', 'Tygodniowe', 'Dwutygodniowe', 'Miesięczne', 'Roczne'], help='Częstotliwość wydatków')
     recurring_list.add_argument('--sortuj-po', choices=['ID', 'Data', 'Kwota', 'Kategoria', 'Częstotliwość'], help='Sortowanie wydatków, domyślnie ID', default='ID')
     recurring_list.add_argument('--malejaco', action='store_true', help='Sortuj malejąco, domyślnie rosnąco')
+    recurring_list.add_argument('--kwota-od', type=float ,help='Minimalna kwota wyświetlanych wydatków')
+    recurring_list.add_argument('--kwota-do', type=float ,help='Maksymalna kwota wyświetlanych wydatków')
 
     recurring_remove = recurring_subparsers.add_parser('usun', help='Usuń wydatek cykliczny')
     recurring_remove.add_argument('-i', '--id', type=int, required=True, help='ID wydatku do usunięcia')

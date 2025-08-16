@@ -45,6 +45,8 @@ def validate_list(args):
             return False, "Podano nieprawidłową datę"
     if args.data_do and args.data_od and args.data_do < args.data_od:
         return False, "--data-do nie może być wcześniejsza niż --data-od"
+    if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
+        return False, "--kwota-do nie może być mniejsza od --kwota-od"
     return True, None
 
 def validate_delete(args):
@@ -73,6 +75,8 @@ def validate_summary(args):
         return False, "Podano nieprawidłowy rok"
     if args.miesiac and not validate_month(args.miesiac):
         return False, "Podano nieprawidłowy miesiąc"
+    if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
+        return False, "--kwota-do nie może być mniejsza od --kwota-od"
     return True, None
 
 def validate_recurring_edit(args):
@@ -95,4 +99,6 @@ def validate_recurring_delete(args):
     return True, None
 
 def validate_recurring_list(args):
+    if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
+        return False, "--kwota-do nie może być mniejsza od --kwota-od"
     return True, None
