@@ -79,6 +79,37 @@ def main():
     recurring_edit.add_argument('--czestotliwosc', choices=['Codzienne', 'Tygodniowe', 'Dwutygodniowe', 'Miesięczne', 'Roczne'], help='Nowa częstotliwość wydatku')
     recurring_edit.add_argument('-d', '--data', help='Nowa data wydatku (YYYY-MM-DD)')
 
+    budget_parser = subparsers.add_parser('budget', help='Zarządzaj budżetem wydatków')
+    budget_subparsers = budget_parser.add_subparsers(dest='budget_mode')
+
+    budget_set = budget_subparsers.add_parser('ustaw', help='Ustaw budżet')
+    budget_set.add_argument('-k', '--kwota', type=float, help='Kwota budżetu', required=True)
+    budget_set.add_argument('--od', help='Od kiedy obowiązuje ustawiany budżet(YYYY-MM), domyślnie data aktualna')
+    budget_set.add_argument('-h', '--historyczne', help='Ustawienie budżetu dla archiwalnych wpisów')
+    budget_set.add_argument('--tylko-ten', help='Ustawienie budżetu tylko dla tego miesiąca')
+
+    budget_remove = budget_subparsers.add_parser('usun', help='Usuń zapis budżetu')
+    budget_remove.add_argument('-i', '--id', type=int, required=True, help='ID budżetu do usunięcia')
+
+    budget_list = budget_subparsers.add_parser('wypisz', help='Wypisz budżety zapisane w pliku CSV')
+    budget_list.add_argument('--data-od', help='Filtr od jakiej daty wyświetlić budżety')
+    budget_list.add_argument('--data-do', help='Filtr do jakiej daty wyświetlić budżety')
+    budget_list.add_argument('--status', choices=['ON', 'OFF', 'CURRENT'], help='Filtr po statusie budżetu')
+    budget_list.add_argument('--sortuj-po', choices=['ID', 'Data', 'Kwota', 'Status'], help='Sortowanie budżetów, domyślnie data', default='Data')
+    budget_list.add_argument('--malejaco', action='store_true', help='Sortuj malejąco, domyślnie rosnąco')
+    budget_list.add_argument('--kwota-od', type=float, help='Filtr początkowy kwoty budżetu')
+    budget_list.add_argument('--kwota-do', type=float, help='Filtr końcowy kwoty budżetu')
+
+    budget_off = budget_subparsers.add_parser('wyłącz', help='Wyłącz budżet')
+    budget_off.add_argument('--od', help='Od kiedy wyłączyć budżet(YYYY-MM), domyślnie data aktualna')
+    budget_off.add_argument('-h', '--historyczne', help='Wyłączenie budżetu dla archiwalnych wpisów')
+    budget_off.add_argument('--tylko-ten', help='Wyłączenie budżetu tylko dla tego miesiąca')
+
+    budget_raport = budget_subparsers.add_parser('raport', help='Pokaż raport podanego miesiaca')
+    budget_raport.add_argument('--data', required=True, help='Data budżetu do raportu (YYYY-MM)')
+
+    budget_current = budget_subparsers.add_parser('aktualny', help='Pokaż aktualny budżet')
+
     args = parser.parse_args()
 
     if args.mode == 'cykliczne':

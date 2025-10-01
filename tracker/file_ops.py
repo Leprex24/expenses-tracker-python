@@ -7,6 +7,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(PROJECT_ROOT, 'wydatki.csv')
 RECURRING_PATH = os.path.join(PROJECT_ROOT, 'recurring.csv')
 BACKUP_PATH = os.path.join(PROJECT_ROOT, 'backups')
+BUDGET_PATH = os.path.join(PROJECT_ROOT, 'budget.csv')
 
 def file_verification_main():
     if not os.path.exists(CSV_PATH):
@@ -105,4 +106,44 @@ def write_all_recurring_expenses(all_rows):
     with open(RECURRING_PATH, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria', 'Częstotliwość'])
+        writer.writerows(all_rows)
+
+def file_verification_budget():
+    if not os.path.exists(BUDGET_PATH):
+        with open(BUDGET_PATH, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
+        print(f"Utworzono nowy plik: {BUDGET_PATH}")
+    else:
+        with open(BUDGET_PATH, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            header = next(reader)
+        expected_columns = ['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status']
+        if header == expected_columns:
+            print(f"Plik {BUDGET_PATH} już istnieje w poprawnym formacie")
+        else:
+            override = int(input(f"Plik {BUDGET_PATH} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
+            while override != 1 and override != 0:
+                override = int(input("Podano złą wartość spróbuj jeszcze raz:"))
+            if override == 1:
+                with open(BUDGET_PATH, 'w', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
+                print(f"Nadpisano plik: {BUDGET_PATH}")
+
+def load_budgets():
+    with open(BUDGET_PATH, 'r', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)
+        return list(reader)
+
+def add_budget(id, year, month, amount):
+    with open(BUDGET_PATH, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([id, year, month, amount])
+
+def write_all_budgets(all_rows):
+    with open(BUDGET_PATH, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
         writer.writerows(all_rows)

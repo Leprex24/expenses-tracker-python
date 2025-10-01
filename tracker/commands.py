@@ -2,7 +2,8 @@ import datetime
 import tabulate
 
 from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add_new_expense_main, create_backup, \
-    add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses
+    add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses, load_budgets, add_budget, \
+    write_all_budgets
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics, get_due_dates, \
     find_last_due_date, date_to_string, already_exists, filter_by_amount
 
@@ -229,3 +230,53 @@ def sync_recurring_expenses():
             if not already_exists(rec, date_str, all_expenses):
                 add_new_expense_main(expense_id, date_str, rec[2], rec[3], rec[4])
                 expense_id += 1
+
+def set_budget(args):
+    all_budgets = load_budgets()
+    if all_budgets:
+        amount = args.kwota
+        id_list = [int(row[0]) for row in all_budgets if row[0] != 'ID']
+        budget_id = max(id_list, default=0) + 1
+        past = args.historyczne
+        one_off = args.tylko_ten
+        if not past:
+            if one_off:
+                status = "CURRENT"
+            else:
+                status = "ON"
+            last_row = all_budgets[-1]
+            year, month = int(last_row[1]), int(last_row[2])
+            current_year, current_month = datetime.datetime.now().year, datetime.datetime.now().month
+            if current_year == year and current_month == month:
+                all_budgets[-1][3] = amount
+                all_budgets[-1][4] = status
+            else:
+                all_budgets.append([budget_id, current_year, current_month, amount, status])
+        else:
+            year, month = args.od.split('-')
+            starting_row = 0
+            for row in all_budgets:
+                while year != row[1] and month != row[2]:
+                    starting_row += 1
+            if one_off:
+                all_budgets[starting_row][3] = amount
+                all_budgets[starting_row][4] = "CURRENT"
+            else:
+                for i in range(starting_row, len(all_budgets)):
+                    all_budgets[i][3] = amount
+                    all_budgets[i][4] = "ON"
+
+    write_all_budgets(all_budgets)
+
+def remove_budget(args):
+    budget_id = args.id
+    switch = input(f"Usunięcie budżetu o id: {budget_id} spowoduje, usuniecie jego wpisu z pliku CSV, a nie wyłączenie go w celu kontynuowania podaj t. \n")
+    if switch.lower() == "t":
+        all_budgets = load_budgets()
+        all_budgets = [row for row in all_budgets if int(row[0]) != budget_id]
+        write_all_budgets(all_budgets)
+    else:
+        exit(0)
+
+def current_budget(args):
+    all_budgets = load_budgets()

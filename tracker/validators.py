@@ -30,6 +30,15 @@ def validate_month(month):
     except ValueError:
         return False
 
+def validate_year_month(date):
+    if date is None:
+        return True
+    try:
+        datetime.datetime.strptime(date, "%Y-%m")
+        return True
+    except ValueError:
+        return False
+
 def validate_add(args):
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
@@ -101,4 +110,24 @@ def validate_recurring_delete(args):
 def validate_recurring_list(args):
     if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
         return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    return True, None
+
+def validate_past_date(od):
+    if not od:
+        return False
+    else:
+        year, month = od.split("-")
+        if year <= datetime.datetime.now().year and month < datetime.datetime.now().month:
+            return True
+        else:
+            return False
+
+
+def validate_set_budget(args):
+    if args.kwota <= 0:
+        return False, "Kwota nie może być mniejsza lub równa od zeru"
+    if not validate_year_month(args.od):
+        return False, "Podano nieprawidłową datę"
+    if args.historyczne and not validate_past_date(args.od):
+        return False, "Do opcji --historyczne należy podać hisotyczną datę"
     return True, None
