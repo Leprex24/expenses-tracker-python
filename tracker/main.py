@@ -85,7 +85,6 @@ def main():
     budget_set = budget_subparsers.add_parser('ustaw', help='Ustaw budżet')
     budget_set.add_argument('-k', '--kwota', type=float, help='Kwota budżetu', required=True)
     budget_set.add_argument('--od', help='Od kiedy obowiązuje ustawiany budżet(YYYY-MM), domyślnie data aktualna')
-    budget_set.add_argument('-h', '--historyczne', help='Ustawienie budżetu dla archiwalnych wpisów')
     budget_set.add_argument('--tylko-ten', help='Ustawienie budżetu tylko dla tego miesiąca')
 
     budget_remove = budget_subparsers.add_parser('usun', help='Usuń zapis budżetu')
@@ -102,7 +101,6 @@ def main():
 
     budget_off = budget_subparsers.add_parser('wyłącz', help='Wyłącz budżet')
     budget_off.add_argument('--od', help='Od kiedy wyłączyć budżet(YYYY-MM), domyślnie data aktualna')
-    budget_off.add_argument('-h', '--historyczne', help='Wyłączenie budżetu dla archiwalnych wpisów')
     budget_off.add_argument('--tylko-ten', help='Wyłączenie budżetu tylko dla tego miesiąca')
 
     budget_raport = budget_subparsers.add_parser('raport', help='Pokaż raport podanego miesiaca')

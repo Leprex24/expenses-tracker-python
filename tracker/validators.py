@@ -112,22 +112,9 @@ def validate_recurring_list(args):
         return False, "--kwota-do nie może być mniejsza od --kwota-od"
     return True, None
 
-def validate_past_date(od):
-    if not od:
-        return False
-    else:
-        year, month = od.split("-")
-        if year <= datetime.datetime.now().year and month < datetime.datetime.now().month:
-            return True
-        else:
-            return False
-
-
 def validate_set_budget(args):
     if args.kwota <= 0:
         return False, "Kwota nie może być mniejsza lub równa od zeru"
     if not validate_year_month(args.od):
         return False, "Podano nieprawidłową datę"
-    if args.historyczne and not validate_past_date(args.od):
-        return False, "Do opcji --historyczne należy podać hisotyczną datę"
     return True, None

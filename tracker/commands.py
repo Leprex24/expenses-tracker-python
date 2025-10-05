@@ -2,10 +2,9 @@ import datetime
 import tabulate
 
 from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add_new_expense_main, create_backup, \
-    add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses, load_budgets, add_budget, \
-    write_all_budgets
+    add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses, load_budgets, write_all_budgets
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics, get_due_dates, \
-    find_last_due_date, date_to_string, already_exists, filter_by_amount
+    find_last_due_date, date_to_string, already_exists, filter_by_amount, normalize_year_month
 
 
 def add_expense(args):
@@ -233,50 +232,56 @@ def sync_recurring_expenses():
 
 def set_budget(args):
     all_budgets = load_budgets()
-    if all_budgets:
-        amount = args.kwota
-        id_list = [int(row[0]) for row in all_budgets if row[0] != 'ID']
-        budget_id = max(id_list, default=0) + 1
-        past = args.historyczne
-        one_off = args.tylko_ten
-        if not past:
-            if one_off:
-                status = "CURRENT"
-            else:
-                status = "ON"
-            last_row = all_budgets[-1]
-            year, month = int(last_row[1]), int(last_row[2])
-            current_year, current_month = datetime.datetime.now().year, datetime.datetime.now().month
-            if current_year == year and current_month == month:
-                all_budgets[-1][3] = amount
-                all_budgets[-1][4] = status
-            else:
-                all_budgets.append([budget_id, current_year, current_month, amount, status])
-        else:
-            year, month = args.od.split('-')
-            starting_row = 0
-            for row in all_budgets:
-                while year != row[1] and month != row[2]:
-                    starting_row += 1
-            if one_off:
-                all_budgets[starting_row][3] = amount
-                all_budgets[starting_row][4] = "CURRENT"
-            else:
-                for i in range(starting_row, len(all_budgets)):
-                    all_budgets[i][3] = amount
-                    all_budgets[i][4] = "ON"
-
+    amount = args.kwota
+    id_list = [int(row[0]) for row in all_budgets if row[0] != 'ID']
+    budget_id = max(id_list, default=0) + 1
+    one_off = args.tylko_ten
+    if one_off:
+        status = "CURRENT"
+    else:
+        status = "ON"
+    if args.od:
+        year, month = normalize_year_month(args.od)
+    else:
+        today = datetime.date.today()
+        year = f"{today.year:04d}"
+        month = f"{today.month:02d}"
+    provided_date_index = next((i for i, row in enumerate(all_budgets) if row[1] == year and row[2] == month), None)
+    if provided_date_index is not None:
+        all_budgets[provided_date_index][3] = amount
+        all_budgets[provided_date_index][4] = status
+    else:
+        all_budgets.append([budget_id, year, month, amount, status])
     write_all_budgets(all_budgets)
+
 
 def remove_budget(args):
     budget_id = args.id
-    switch = input(f"Usunięcie budżetu o id: {budget_id} spowoduje, usuniecie jego wpisu z pliku CSV, a nie wyłączenie go w celu kontynuowania podaj t. \n")
-    if switch.lower() == "t":
-        all_budgets = load_budgets()
-        all_budgets = [row for row in all_budgets if int(row[0]) != budget_id]
-        write_all_budgets(all_budgets)
-    else:
-        exit(0)
-
-def current_budget(args):
     all_budgets = load_budgets()
+    all_budgets = [row for row in all_budgets if int(row[0]) != budget_id]
+    write_all_budgets(all_budgets)
+    print(f"Usunięto budżet o ID: {budget_id}")
+
+def current_budget():
+    all_budgets = load_budgets()
+    if not all_budgets:
+        print("Aktualnie nie obowiązuje żaden budżet")
+        return
+    else:
+        today = datetime.date.today()
+        current_year, current_month = f"{today.year:04d}", f"{today.month:02d}"
+        exact_current = next((row for row in all_budgets if row[1] == current_year and row[2] == current_year and row[4] == "CURRENT"), None)
+        if exact_current:
+            if exact_current[3]:
+                print(f"Aktualny budżet wynosi {float(exact_current[3]):.2f} zł na miesiąc (tylko ten miesiąc)")
+            else:
+                print("W tym miesiącu budżet jest wyłączony (tylko ten miesiąc)")
+            return
+        last_change = next((row for row in reversed(all_budgets) if (row[1], row[2]) <= (current_year, current_month) and row[4] in ("ON", "OFF")), None)
+        if not last_change:
+            print("Aktualnie nie obowiązuje żaden budżet")
+            return
+        if last_change[4] == "ON":
+            print(f"Aktualny budżet wynosi {float(last_change[3]):.2f} zł na miesiąc i obowiązuje od {last_change[1]}-{last_change[2]}")
+        else:
+            print(f"Aktualnie nie obowiązuje żaden budżet (wyłączony od {last_change[1]}-{last_change[2]})")

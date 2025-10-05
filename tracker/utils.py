@@ -159,3 +159,7 @@ def already_exists(rec, date_str, all_expenses):
         if expense[1] == date_str and expense[2] == rec[2] and expense[3] == rec[3] and expense[4] == rec[4]:
             return True
     return False
+
+def normalize_year_month(d):
+    dt = datetime.datetime.strptime(d, "%Y-%m")
+    return f"{dt.year:04d}", f"{dt.month:02d}"

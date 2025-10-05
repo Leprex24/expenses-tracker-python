@@ -143,6 +143,7 @@ def add_budget(id, year, month, amount):
         writer.writerow([id, year, month, amount])
 
 def write_all_budgets(all_rows):
+    all_rows.sort(key=lambda row: (int(row[1]), int(row[2])))
     with open(BUDGET_PATH, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
