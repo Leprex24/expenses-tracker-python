@@ -14,15 +14,13 @@ def file_verification_main():
         with open(CSV_PATH, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-        print(f"Utworzono nowy plik: {CSV_PATH}")
+        # print(f"Utworzono nowy plik: {CSV_PATH}")
     else:
         with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             header = next(reader)
         expected_columns = ['ID', 'Data', 'Opis', 'Kwota', 'Kategoria']
-        if header == expected_columns:
-            print(f"Plik {CSV_PATH} już istnieje w poprawnym formacie")
-        else:
+        if header != expected_columns:
             override = int(input(f"Plik {CSV_PATH} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
             while override != 1 and override != 0:
                 override = int(input("Podano złą wartość spróbuj jeszcze raz:"))
@@ -30,7 +28,9 @@ def file_verification_main():
                 with open(CSV_PATH, 'w', newline='', encoding='utf-8') as csvfile:
                     writer = csv.writer(csvfile)
                     writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-                print(f"Nadpisano plik: {CSV_PATH}")
+                # print(f"Nadpisano plik: {CSV_PATH}")
+        # else:
+           # print(f"Plik {CSV_PATH} już istnieje w poprawnym formacie")
 
 def get_all_expenses_main():
     with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
@@ -56,7 +56,7 @@ def create_backup():
     backup_filename = f"wydatki_backup_{timestamp}.csv"
     backup_fullpath = os.path.join(BACKUP_PATH, backup_filename)
     shutil.copyfile(CSV_PATH, backup_fullpath)
-    print(f"Utworzono kopie zapasową: {backup_fullpath}")
+    # print(f"Utworzono kopie zapasową: {backup_fullpath}")
     delete_old_backups()
 
 def delete_old_backups():
@@ -73,25 +73,28 @@ def file_verification_recurring():
         with open(RECURRING_PATH, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria', 'Częstotliwość'])
-        print(f"Utworzono nowy plik: {RECURRING_PATH}")
+        # print(f"Utworzono nowy plik: {RECURRING_PATH}")
     else:
         with open(RECURRING_PATH, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             header = next(reader)
         expected_columns = ['ID', 'Data', 'Opis', 'Kwota', 'Kategoria', 'Częstotliwość']
-        if header == expected_columns:
-            print(f"Plik {RECURRING_PATH} już istnieje w poprawnym formacie")
-        else:
-            override = int(input(f"Plik {RECURRING_PATH} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
+        if header != expected_columns:
+            override = int(input(
+                f"Plik {RECURRING_PATH} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
             while override != 1 and override != 0:
                 override = int(input("Podano złą wartość spróbuj jeszcze raz:"))
             if override == 1:
                 with open(RECURRING_PATH, 'w', newline='', encoding='utf-8') as csvfile:
                     writer = csv.writer(csvfile)
                     writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria', 'Częstotliwość'])
-                print(f"Nadpisano plik: {RECURRING_PATH}")
+                # print(f"Nadpisano plik: {RECURRING_PATH}")
+        # else:
+        #     print(f"Plik {RECURRING_PATH} już istnieje w poprawnym formacie")
 
 def load_recurring_expenses():
+    if not os.path.exists(RECURRING_PATH):
+        return []
     with open(RECURRING_PATH, 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
         next(reader)
@@ -113,23 +116,24 @@ def file_verification_budget():
         with open(BUDGET_PATH, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
-        print(f"Utworzono nowy plik: {BUDGET_PATH}")
+        # print(f"Utworzono nowy plik: {BUDGET_PATH}")
     else:
         with open(BUDGET_PATH, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             header = next(reader)
         expected_columns = ['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status']
-        if header == expected_columns:
-            print(f"Plik {BUDGET_PATH} już istnieje w poprawnym formacie")
-        else:
-            override = int(input(f"Plik {BUDGET_PATH} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
+        if header != expected_columns:
+            override = int(input(
+                f"Plik {BUDGET_PATH} już istnieje, ale w innym formacie, czy chcesz go nadpisać? Podaj 1 dla tak lub 0 dla nie: "))
             while override != 1 and override != 0:
                 override = int(input("Podano złą wartość spróbuj jeszcze raz:"))
             if override == 1:
                 with open(BUDGET_PATH, 'w', newline='', encoding='utf-8') as csvfile:
                     writer = csv.writer(csvfile)
                     writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
-                print(f"Nadpisano plik: {BUDGET_PATH}")
+                # print(f"Nadpisano plik: {BUDGET_PATH}")
+        # else:
+        #     print(f"Plik {BUDGET_PATH} już istnieje w poprawnym formacie")
 
 def load_budgets():
     with open(BUDGET_PATH, 'r', encoding='utf-8') as csvfile:
