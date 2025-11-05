@@ -4,7 +4,8 @@ import tabulate
 from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add_new_expense_main, create_backup, \
     add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses, load_budgets, write_all_budgets
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics, get_due_dates, \
-    find_last_due_date, date_to_string, already_exists, filter_by_amount, normalize_year_month
+    find_last_due_date, date_to_string, already_exists, filter_by_amount, normalize_year_month, sort_budgets, \
+    sum_expenses_in_month, filter_by_date_budgets, filter_by_amount_budgets
 
 
 def add_expense(args):
@@ -255,6 +256,31 @@ def set_budget(args):
     write_all_budgets(all_budgets)
 
 
+def set_budget_off(args):
+    all_budgets = load_budgets()
+    amount = ""
+    id_list = [int(row[0]) for row in all_budgets if row[0] != 'ID']
+    budget_id = max(id_list, default=0) + 1
+    one_off = args.tylko_ten
+    if one_off:
+        status = "CURRENT"
+    else:
+        status = "OFF"
+    if args.od:
+        year, month = normalize_year_month(args.od)
+    else:
+        today = datetime.date.today()
+        year = f"{today.year:04d}"
+        month = f"{today.month:02d}"
+    provided_date_index = next((i for i, row in enumerate(all_budgets) if row[1] == year and row[2] == month), None)
+    if provided_date_index is not None:
+        all_budgets[provided_date_index][3] = amount
+        all_budgets[provided_date_index][4] = status
+    else:
+        all_budgets.append([budget_id, year, month, amount, status])
+    write_all_budgets(all_budgets)
+
+
 def remove_budget(args):
     budget_id = args.id
     all_budgets = load_budgets()
@@ -262,7 +288,7 @@ def remove_budget(args):
     write_all_budgets(all_budgets)
     print(f"Usunięto budżet o ID: {budget_id}")
 
-def current_budget():
+def current_budget(args):
     all_budgets = load_budgets()
     if not all_budgets:
         print("Aktualnie nie obowiązuje żaden budżet")
@@ -270,18 +296,54 @@ def current_budget():
     else:
         today = datetime.date.today()
         current_year, current_month = f"{today.year:04d}", f"{today.month:02d}"
-        exact_current = next((row for row in all_budgets if row[1] == current_year and row[2] == current_year and row[4] == "CURRENT"), None)
-        if exact_current:
-            if exact_current[3]:
-                print(f"Aktualny budżet wynosi {float(exact_current[3]):.2f} zł na miesiąc (tylko ten miesiąc)")
-            else:
+        current_budget = next((row for row in reversed(all_budgets) if (row[1], row[2]) == (current_year, current_month) and row[4] == "CURRENT"), None)
+        if current_budget:
+            if current_budget[3] == "":
                 print("W tym miesiącu budżet jest wyłączony (tylko ten miesiąc)")
-            return
-        last_change = next((row for row in reversed(all_budgets) if (row[1], row[2]) <= (current_year, current_month) and row[4] in ("ON", "OFF")), None)
-        if not last_change:
-            print("Aktualnie nie obowiązuje żaden budżet")
-            return
-        if last_change[4] == "ON":
-            print(f"Aktualny budżet wynosi {float(last_change[3]):.2f} zł na miesiąc i obowiązuje od {last_change[1]}-{last_change[2]}")
+            else:
+                print(f"Aktualny budżet wynosi {float(current_budget[3]):.2f} zł na miesiąc (tylko ten miesiąc)")
         else:
-            print(f"Aktualnie nie obowiązuje żaden budżet (wyłączony od {last_change[1]}-{last_change[2]})")
+            current_budget = next((row for row in reversed(all_budgets) if (row[1], row[2]) <= (current_year, current_month) and row[4] != "CURRENT"), None)
+            if current_budget:
+                if current_budget[3] == "":
+                    print(f"Aktualnie nie obowiązuje żaden budżet (wyłączony od {current_budget[1]}-{current_budget[2]})")
+                else:
+                    print(f"Aktualny budżet wynosi {float(current_budget[3]):.2f} zł na miesiąc i obowiązuje od {current_budget[1]}-{current_budget[2]}")
+            else:
+                print("Aktualnie nie obowiązuje żaden budżet")
+
+def list_budgets(args):
+    all_budgets = load_budgets()
+    status = args.status
+    if not all_budgets:
+        print("Brak budżetów do wyświetlenia")
+        return
+    data = filter_by_date_budgets(args, all_budgets)
+    if status is not None:
+        data = [row for row in data if row[4] == status]
+    data = filter_by_amount_budgets(args, data)
+    data = sort_budgets(data, args.sortuj_po, args.malejaco)
+    if data:
+        print(tabulate.tabulate(data, headers=['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'], tablefmt="github", numalign="center"))
+    else:
+        print("Brak budżetów do wyświetlenia")
+
+def raport_budget(args):
+    all_budgets = load_budgets()
+    date = args.data
+    year, month = normalize_year_month(date)
+    if all_budgets:
+       budget_for_raport =  next((row for row in reversed(all_budgets) if (str(row[1]).zfill(4),str(row[2]).zfill(2)) <= (year,month)), None)
+       if budget_for_raport is None:
+           print("Nie można przeprowadzić raportu, nie ustawiono żadnego budżetu dla podanego miesiąca")
+       else:
+           if budget_for_raport[4]=="OFF" or (budget_for_raport[3]=="" and budget_for_raport[4]=="CURRENT"):
+               print(f"W miesiącu {date}, budżet był wyłączony")
+           else:
+               sum_of_expenses = sum_expenses_in_month(date)
+               if sum_of_expenses>float(budget_for_raport[3]):
+                   print(f"W miesiącu {date}, budżet wynosił {budget_for_raport[3]}zł i został przekroczony o {sum_of_expenses-float(budget_for_raport[3])}zł.")
+               else:
+                   print(f"W miesiącu {date}, budżet wynosił {budget_for_raport[3]}zł i nie został on przekroczony. Można jeszcze wydać {float(budget_for_raport[3])-sum_of_expenses}zł.")
+    else:
+        print("Nie dodano jeszcze żadnego budżetu")

@@ -1,6 +1,6 @@
 import datetime
 
-from tracker.utils import id_exists, id_exists_recurring
+from tracker.utils import id_exists, id_exists_recurring, id_exists_budgets
 
 
 def validate_date(date):
@@ -114,7 +114,37 @@ def validate_recurring_list(args):
 
 def validate_set_budget(args):
     if args.kwota <= 0:
-        return False, "Kwota nie może być mniejsza lub równa od zeru"
+        return False, "Kwota nie może być mniejsza lub równa zeru"
     if not validate_year_month(args.od):
         return False, "Podano nieprawidłową datę"
+    return True, None
+
+def validate_turn_off_budget(args):
+    if not validate_year_month(args.od):
+        return False, "Podano nieprawidłową datę"
+    return True, None
+
+def validate_raport_budget(args):
+    if not validate_year_month(args.data):
+        return False, "Podano nieprawidłową datę"
+    return True, None
+
+def validate_list_budget(args):
+    if not validate_year_month(args.data_od) or not validate_year_month(args.data_do):
+        return False, "Podano nieprawidłową datę"
+    if args.data_od and args.data_do and args.data_do < args.data_od:
+        return False, "--data-do nie może być mniejsza od --data-od"
+    for kwota in [args.kwota_do, args.kwota_od]:
+        if kwota and kwota < 0:
+            return False, "--kwota-od i --kwota-do nie mogą być mniejsze od 0"
+    if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
+        return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    return True, None
+
+def validate_remove_budget(args):
+    if not id_exists_budgets(args.id):
+        return False, f"Wydatek o ID: {args.id} nie istnieje"
+    return True, None
+
+def validate_current_budget(args):
     return True, None

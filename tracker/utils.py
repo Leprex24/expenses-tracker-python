@@ -1,7 +1,7 @@
 from calendar import monthrange
 from datetime import timedelta, datetime, date
 
-from tracker.file_ops import get_all_expenses_main, load_recurring_expenses
+from tracker.file_ops import get_all_expenses_main, load_recurring_expenses, load_budgets
 
 
 def id_exists(expense_id, rows=None):
@@ -161,5 +161,62 @@ def already_exists(rec, date_str, all_expenses):
     return False
 
 def normalize_year_month(d):
-    dt = datetime.datetime.strptime(d, "%Y-%m")
+    dt = datetime.strptime(d, "%Y-%m")
     return f"{dt.year:04d}", f"{dt.month:02d}"
+
+def filter_by_date_budgets(args, all_rows):
+    date_from = args.data_od
+    date_to = args.data_do
+    if date_from is None and date_to is None:
+        data = all_rows
+    elif date_from is None and date_to is not None:
+        year, month = normalize_year_month(date_to)
+        data = [row for row in all_rows if (str(row[1]).zfill(4), str(row[2]).zfill(2)) <= (year, month)]
+    elif date_from is not None and date_to is None:
+        year, month = normalize_year_month(date_from)
+        data = [row for row in all_rows if (str(row[1]).zfill(4), str(row[2]).zfill(2)) >= (year, month)]
+    else:
+        year_from, month_from = normalize_year_month(date_from)
+        year_to, month_to = normalize_year_month(date_to)
+        data = [row for row in all_rows if (year_from,month_from) <= (str(row[1]).zfill(4), str(row[2]).zfill(2)) <= (year_to, month_to)]
+
+    return data
+
+def filter_by_amount_budgets(args, all_rows):
+    amount_from = args.kwota_od
+    amount_to = args.kwota_do
+    if amount_from is None and amount_to is None:
+        data = all_rows
+    else:
+        data = [row for row in all_rows if row[3] != ""]
+        if amount_from is None and amount_to is not None:
+            data = [row for row in data if float(row[3]) <= amount_to]
+        elif amount_from is not None and amount_to is None:
+            data = [row for row in data if float(row[3]) >= amount_from]
+        else:
+            data = [row for row in data if amount_from <= float(row[3]) <= amount_to]
+    return data
+
+def sort_budgets(data, sort_by, reverse):
+    key_map = {
+        'ID': lambda x: int(x[0]),
+        'Data': lambda x: (str(x[1]).zfill(4), str(x[2]).zfill(2)),
+        'Kwota': lambda x: float(x[3].strip()) if str(x[3]).strip() != "" else 0.0,
+        'Status': lambda x: x[4]
+    }
+    data.sort(key=key_map[sort_by], reverse=reverse)
+    return data
+
+def sum_expenses_in_month(month):
+    all_expenses = get_all_expenses_main()
+    data = [row for row in all_expenses if row[1].startswith(month)]
+    sum_of_expenses = 0.0
+    for expense in data:
+        sum_of_expenses += float(expense[3])
+    return sum_of_expenses
+
+def id_exists_budgets(expense_id, rows=None):
+    if rows is None:
+        rows = load_budgets()
+    id_list = [int(row[0]) for row in rows]
+    return expense_id in id_list

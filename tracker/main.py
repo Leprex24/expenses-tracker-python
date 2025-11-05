@@ -2,10 +2,12 @@ import argparse
 
 from tracker.commands import add_expense, list_expenses, delete_expense, edit_expense, summarize_expenses, \
     add_recurring_expense, list_recurring_expenses, delete_recurring_expense, edit_recurring_expense, \
-    sync_recurring_expenses
-from tracker.file_ops import file_verification_main, file_verification_recurring
+    sync_recurring_expenses, set_budget, remove_budget, list_budgets, set_budget_off, raport_budget, current_budget
+from tracker.file_ops import file_verification_main, file_verification_recurring, file_verification_budget
 from tracker.validators import validate_add, validate_delete, validate_edit, validate_list, validate_summary, \
-    validate_recurring_edit, validate_recurring_add, validate_recurring_list, validate_recurring_delete
+    validate_recurring_edit, validate_recurring_add, validate_recurring_list, validate_recurring_delete, \
+    validate_set_budget, validate_remove_budget, validate_list_budget, validate_turn_off_budget, validate_raport_budget, \
+    validate_current_budget
 
 
 def main():
@@ -79,13 +81,13 @@ def main():
     recurring_edit.add_argument('--czestotliwosc', choices=['Codzienne', 'Tygodniowe', 'Dwutygodniowe', 'Miesięczne', 'Roczne'], help='Nowa częstotliwość wydatku')
     recurring_edit.add_argument('-d', '--data', help='Nowa data wydatku (YYYY-MM-DD)')
 
-    budget_parser = subparsers.add_parser('budget', help='Zarządzaj budżetem wydatków')
+    budget_parser = subparsers.add_parser('budzet', help='Zarządzaj budżetem wydatków')
     budget_subparsers = budget_parser.add_subparsers(dest='budget_mode')
 
     budget_set = budget_subparsers.add_parser('ustaw', help='Ustaw budżet')
     budget_set.add_argument('-k', '--kwota', type=float, help='Kwota budżetu', required=True)
     budget_set.add_argument('--od', help='Od kiedy obowiązuje ustawiany budżet(YYYY-MM), domyślnie data aktualna')
-    budget_set.add_argument('--tylko-ten', help='Ustawienie budżetu tylko dla tego miesiąca')
+    budget_set.add_argument('--tylko-ten', action="store_true", help='Ustawienie budżetu tylko dla tego miesiąca')
 
     budget_remove = budget_subparsers.add_parser('usun', help='Usuń zapis budżetu')
     budget_remove.add_argument('-i', '--id', type=int, required=True, help='ID budżetu do usunięcia')
@@ -99,9 +101,9 @@ def main():
     budget_list.add_argument('--kwota-od', type=float, help='Filtr początkowy kwoty budżetu')
     budget_list.add_argument('--kwota-do', type=float, help='Filtr końcowy kwoty budżetu')
 
-    budget_off = budget_subparsers.add_parser('wyłącz', help='Wyłącz budżet')
+    budget_off = budget_subparsers.add_parser('wylacz', help='Wyłącz budżet')
     budget_off.add_argument('--od', help='Od kiedy wyłączyć budżet(YYYY-MM), domyślnie data aktualna')
-    budget_off.add_argument('--tylko-ten', help='Wyłączenie budżetu tylko dla tego miesiąca')
+    budget_off.add_argument('--tylko-ten', action="store_true", help='Wyłączenie budżetu tylko dla tego miesiąca')
 
     budget_raport = budget_subparsers.add_parser('raport', help='Pokaż raport podanego miesiaca')
     budget_raport.add_argument('--data', required=True, help='Data budżetu do raportu (YYYY-MM)')
@@ -126,6 +128,34 @@ def main():
         }
         validator = validators.get(args.recurring_mode)
         handler = handlers.get(args.recurring_mode)
+        if validator:
+            valid, error_msg = validator(args)
+            if not valid:
+                parser.error(error_msg)
+        if handler:
+            handler(args)
+        else:
+            parser.print_help()
+    elif args.mode == 'budzet':
+        file_verification_budget()
+        validators = {
+            'ustaw': validate_set_budget,
+            'usun': validate_remove_budget,
+            'wypisz': validate_list_budget,
+            'wylacz': validate_turn_off_budget,
+            'raport': validate_raport_budget,
+            'aktualny': validate_current_budget,
+        }
+        handlers = {
+            'ustaw': set_budget,
+            'usun': remove_budget,
+            'wypisz': list_budgets,
+            'wylacz': set_budget_off,
+            'raport': raport_budget,
+            'aktualny': current_budget,
+        }
+        validator = validators.get(args.budget_mode)
+        handler = handlers.get(args.budget_mode)
         if validator:
             valid, error_msg = validator(args)
             if not valid:
