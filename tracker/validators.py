@@ -39,9 +39,22 @@ def validate_year_month(date):
     except ValueError:
         return False
 
+def validate_amount(amount):
+    if amount is None:
+        return True
+    try:
+        if amount <= 0 or round(amount,2)!=amount:
+            return False
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def validate_add(args):
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
+    if not validate_amount(args.kwota):
+        return False, "Podano kwotę w niepoprawnym formacie"
     if id_exists(args.id):
         return False, "Podano już istniejące ID"
     return True, None
@@ -56,6 +69,9 @@ def validate_list(args):
         return False, "--data-do nie może być wcześniejsza niż --data-od"
     if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
         return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    for kwota in [args.kwota_od, args.kwota_do]:
+        if not validate_amount(kwota):
+            return False, "Podano kwotę w niepoprawnym formacie"
     return True, None
 
 def validate_delete(args):
@@ -68,6 +84,8 @@ def validate_edit(args):
         return False, "Podano nieprawidłową datę"
     if not id_exists(args.id):
         return False, f"Wydatek o ID: {args.id} nie istnieje"
+    if not validate_amount(args.kwota):
+        return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 
 def validate_summary(args):
@@ -86,6 +104,9 @@ def validate_summary(args):
         return False, "Podano nieprawidłowy miesiąc"
     if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
         return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    for kwota in [args.kwota_od, args.kwota_do]:
+        if not validate_amount(kwota):
+            return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 
 def validate_recurring_edit(args):
@@ -93,6 +114,8 @@ def validate_recurring_edit(args):
         return False, "Podano nieprawidłową datę"
     if not id_exists_recurring(args.id):
         return False, f"Wydatek cykliczny o id {args.id} nie istnieje"
+    if not validate_amount(args.kwota):
+        return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 
 def validate_recurring_add(args):
@@ -100,6 +123,8 @@ def validate_recurring_add(args):
         return False, "Podano nieprawidłową datę"
     if id_exists_recurring(args.id):
         return False, "Podano już istniejące ID"
+    if not validate_amount(args.kwota):
+        return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 
 def validate_recurring_delete(args):
@@ -110,11 +135,14 @@ def validate_recurring_delete(args):
 def validate_recurring_list(args):
     if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
         return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    for kwota in [args.kwota_od, args.kwota_do]:
+        if not validate_amount(kwota):
+            return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 
 def validate_set_budget(args):
-    if args.kwota <= 0:
-        return False, "Kwota nie może być mniejsza lub równa zeru"
+    if not validate_amount(args.kwota):
+        return False, "Podano kwote w niepoprawnym formacie"
     if not validate_year_month(args.od):
         return False, "Podano nieprawidłową datę"
     return True, None
@@ -135,8 +163,8 @@ def validate_list_budget(args):
     if args.data_od and args.data_do and args.data_do < args.data_od:
         return False, "--data-do nie może być mniejsza od --data-od"
     for kwota in [args.kwota_do, args.kwota_od]:
-        if kwota and kwota < 0:
-            return False, "--kwota-od i --kwota-do nie mogą być mniejsze od 0"
+        if not validate_amount(kwota):
+            return False, "Podano kwote w niepoprawnym formacie"
     if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
         return False, "--kwota-do nie może być mniejsza od --kwota-od"
     return True, None
