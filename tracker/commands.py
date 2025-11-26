@@ -2,14 +2,15 @@ import datetime
 import tabulate
 
 from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add_new_expense_main, create_backup, \
-    add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses, load_budgets, write_all_budgets
+    add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses, load_budgets, write_all_budgets, \
+    CSV_PATH, RECURRING_PATH, BUDGET_PATH
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics, get_due_dates, \
     find_last_due_date, date_to_string, already_exists, filter_by_amount, normalize_year_month, sort_budgets, \
     sum_expenses_in_month, filter_by_date_budgets, filter_by_amount_budgets
 
 
 def add_expense(args):
-    create_backup()
+    create_backup(CSV_PATH)
     expense_id = args.id
     date = args.data
     description = args.opis
@@ -57,7 +58,7 @@ def list_expenses(args):
         print("Brak wydatków do wyświetlenia")
 
 def delete_expense(args):
-    create_backup()
+    create_backup(CSV_PATH)
     expense_id = args.id
     all_rows = get_all_expenses_main()
     all_rows = [row for row in all_rows if int(row[0]) != expense_id]
@@ -65,7 +66,7 @@ def delete_expense(args):
     print(f"Usunięto wydatek (ID: {expense_id})")
 
 def edit_expense(args):
-    create_backup()
+    create_backup(CSV_PATH)
     expense_id = args.id
     date = args.data
     description = args.opis
@@ -137,6 +138,7 @@ def summarize_expenses(args):
         print("Brak wydatków w podanym okresie czasowym")
 
 def add_recurring_expense(args):
+    create_backup(RECURRING_PATH)
     expense_id = args.id
     date = args.data
     description = args.opis
@@ -189,6 +191,7 @@ def list_recurring_expenses(args):
         print("Brak wydatków do wyświetlenia")
 
 def delete_recurring_expense(args):
+    create_backup(RECURRING_PATH)
     expense_id = args.id
     all_rows = load_recurring_expenses()
     all_rows = [row for row in all_rows if int(row[0]) != expense_id]
@@ -196,6 +199,7 @@ def delete_recurring_expense(args):
     print(f"Usunięto wydatek (ID: {expense_id})")
 
 def edit_recurring_expense(args):
+    create_backup(RECURRING_PATH)
     expense_id = args.id
     date = args.data
     description = args.opis
@@ -219,6 +223,7 @@ def edit_recurring_expense(args):
     print(f"Edytowano wydatek (ID: {expense_id})")
 
 def sync_recurring_expenses():
+    create_backup(CSV_PATH)
     recurring_templates = load_recurring_expenses()
     all_expenses = get_all_expenses_main()
     id_list = [int(row[0]) for row in all_expenses if row[0] != 'ID']
@@ -232,6 +237,7 @@ def sync_recurring_expenses():
                 expense_id += 1
 
 def set_budget(args):
+    create_backup(BUDGET_PATH)
     all_budgets = load_budgets()
     amount = args.kwota
     id_list = [int(row[0]) for row in all_budgets if row[0] != 'ID']
@@ -257,6 +263,7 @@ def set_budget(args):
 
 
 def set_budget_off(args):
+    create_backup(BUDGET_PATH)
     all_budgets = load_budgets()
     amount = ""
     id_list = [int(row[0]) for row in all_budgets if row[0] != 'ID']
@@ -282,6 +289,7 @@ def set_budget_off(args):
 
 
 def remove_budget(args):
+    create_backup(BUDGET_PATH)
     budget_id = args.id
     all_budgets = load_budgets()
     all_budgets = [row for row in all_budgets if int(row[0]) != budget_id]
