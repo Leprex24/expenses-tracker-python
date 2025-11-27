@@ -44,12 +44,12 @@ def add_new_expense_main(expense_id, date, description, amount, category):
         writer = csv.writer(csvfile)
         writer.writerow([expense_id, date, description, amount, category])
 
-def create_backup(CSV_PATH):
+def create_backup(csv_file_path):
     os.makedirs(BACKUP_DIR, exist_ok=True)
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    basename = os.path.basename(CSV_PATH)
+    basename = os.path.basename(csv_file_path)
 
     if basename == 'wydatki.csv':
         backup_filename = f"wydatki_backup_{timestamp}.csv"
@@ -57,13 +57,16 @@ def create_backup(CSV_PATH):
         backup_filename = f"recurring_backup_{timestamp}.csv"
     elif basename == 'budget.csv':
         backup_filename = f"budget_backup_{timestamp}.csv"
+    else:
+        raise ValueError(f"Unknown CSV file: {basename}")
     backup_fullpath = os.path.join(BACKUP_DIR, backup_filename)
-    shutil.copyfile(CSV_PATH, backup_fullpath)
+    shutil.copyfile(csv_file_path, backup_fullpath)
     # print(f"Utworzono kopie zapasową: {backup_fullpath}")
-    delete_old_backups(backup_filename)
+    delete_old_backups(basename)
 
 def delete_old_backups(file_type):
-    backups = [f for f in os.listdir(BACKUP_DIR) if f.startswith(file_type) and f.endswith(".csv")]
+    prefix = f"{file_type.replace('.csv','')}_backup"
+    backups = [f for f in os.listdir(BACKUP_DIR) if f.startswith(prefix) and f.endswith(".csv")]
     if len(backups) > 20:
         backups.sort()
         num_to_delete = len(backups) - 20
@@ -71,12 +74,12 @@ def delete_old_backups(file_type):
             backup_for_removal = os.path.join(BACKUP_DIR, old_backup)
             os.remove(backup_for_removal)
 
-def create_emergency_backup(CSV_PATH):
+def create_emergency_backup(csv_file_path):
     os.makedirs(BACKUP_EMERGENCY_DIR, exist_ok=True)
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    basename = os.path.basename(CSV_PATH)
+    basename = os.path.basename(csv_file_path)
 
     if basename == 'wydatki.csv':
         backup_filename = f"wydatki_backup_{timestamp}.csv"
@@ -84,8 +87,10 @@ def create_emergency_backup(CSV_PATH):
         backup_filename = f"recurring_backup_{timestamp}.csv"
     elif basename == 'budget.csv':
         backup_filename = f"budget_backup_{timestamp}.csv"
+    else:
+        raise ValueError(f"Unknown CSV file: {basename}")
     backup_fullpath = os.path.join(BACKUP_EMERGENCY_DIR, backup_filename)
-    shutil.copyfile(CSV_PATH, backup_fullpath)
+    shutil.copyfile(csv_file_path, backup_fullpath)
     print(f"Plik {basename} już istnieje, ale w innym formacie, utworzono jego kopię {backup_fullpath} oraz nadpisano do poprawnego formatu")
 
 def file_verification_recurring():
