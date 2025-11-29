@@ -166,6 +166,9 @@ def write_all_budgets(all_rows):
 def resolve_export_path(output_arg, file_format='csv'):
     if os.sep in output_arg or '/' in output_arg:
         path = output_arg
+        folder = os.path.dirname(path)
+        if folder:
+            os.makedirs(folder, exist_ok=True)
     else:
         os.makedirs(EXPORTS_DIR, exist_ok=True)
         path = os.path.join(EXPORTS_DIR, output_arg)
