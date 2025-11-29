@@ -43,7 +43,10 @@ def validate_amount(amount):
     if amount is None:
         return True
     try:
-        if amount <= 0 or round(amount,2)!=amount:
+        if amount <= 0:
+            return False
+        rounded_amount = round(amount, 2)
+        if abs(amount - rounded_amount) > 1e-9:
             return False
         return True
     except (ValueError, TypeError):
@@ -175,4 +178,38 @@ def validate_remove_budget(args):
     return True, None
 
 def validate_current_budget(args):
+    return True, None
+
+def validate_expenses_export(args):
+    for date in [args.data_do, args.data_od]:
+        if date and not validate_date(date):
+            return False, "Podano nieprawidłową datę"
+    if args.data_do and args.data_od and args.data_do < args.data_od:
+        return False, "--data-do nie może być mniejsza od --data-od"
+    for amount in [args.kwota_do, args.kwota_od]:
+        if amount and not validate_amount(amount):
+            return False, "Podano kwote w niepoprawnym formacie"
+    if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
+        return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    return True, None
+
+def validate_recurring_export(args):
+    for amount in [args.kwota_do, args.kwota_od]:
+        if amount and not validate_amount(amount):
+            return False, "Podano kwote w niepoprawnym formacie"
+    if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
+        return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    return True, None
+
+def validate_budget_export(args):
+    for amount in [args.kwota_do, args.kwota_od]:
+        if amount and not validate_amount(amount):
+            return False, "Podano kwote w niepoprawnym formacie"
+    if args.kwota_do and args.kwota_od and args.kwota_do < args.kwota_od:
+        return False, "--kwota-do nie może być mniejsza od --kwota-od"
+    for date in [args.data_do, args.data_od]:
+        if date and not validate_year_month(date):
+            return False, "Podano nieprawidłową datę"
+    if args.data_do and args.data_od and args.data_do < args.data_od:
+        return False, "--data-do nie może być mniejsza od --data-od"
     return True, None

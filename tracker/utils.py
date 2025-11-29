@@ -2,6 +2,7 @@ from calendar import monthrange
 from datetime import timedelta, datetime, date
 
 from tracker.file_ops import get_all_expenses_main, load_recurring_expenses, load_budgets
+from dateutil.relativedelta import relativedelta
 
 
 def id_exists(expense_id, rows=None):
@@ -220,3 +221,63 @@ def id_exists_budgets(expense_id, rows=None):
         rows = load_budgets()
     id_list = [int(row[0]) for row in rows]
     return expense_id in id_list
+
+def create_expenses_metadata(args, data, source):
+    metadata = {
+        'exported_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'source': source,
+        'filters': {},
+        'count': len(data),
+    }
+    possible_filters = [
+        'kategoria', 'data_od', 'data_do', 'kwota_od', 'kwota_do', 'status', 'czestotliwosc',
+    ]
+    for filter in possible_filters:
+        if hasattr(args, filter):
+            value = getattr(args, filter)
+            if value is not None:
+                metadata['filters'][filter] = value
+    return metadata
+
+def expand_budgets_to_months(args, all_budgets):
+    if args.data_od:
+        start_year, start_month = normalize_year_month(args.data_od)
+    else:
+        start_year, start_month = str(all_budgets[0][1]).zfill(4), str(all_budgets[0][2]).zfill(2)
+    if args.data_do:
+        end_year, end_month = normalize_year_month(args.data_do)
+    else:
+        end_year, end_month = str(all_budgets[-1][1]).zfill(4), str(all_budgets[-1][2]).zfill(2)
+    result = []
+    current = date(int(start_year), int(start_month), 1)
+    end = date(int(end_year), int(end_month), 1)
+    while current <= end:
+        year_str = f"{current.year:04d}"
+        month_str = f"{current.month:02d}"
+        current_budget = next((budget for budget in all_budgets if budget[4] == 'CURRENT' and (str(budget[1]).zfill(4), str(budget[2]).zfill(2)) == (year_str, month_str)), None)
+        if current_budget:
+            amount = current_budget[3] if current_budget[3] else 'BRAK'
+            status = 'CURRENT'
+            source_id = current_budget[0]
+        else:
+            active = next((budget for budget in reversed(all_budgets) if budget[4] != 'CURRENT' and (str(budget[1]).zfill(4), str(budget[2]).zfill(2)) <= (year_str, month_str)), None)
+            if active:
+                if active[4] == "OFF":
+                    amount = 'BRAK'
+                    status = 'OFF'
+                else:
+                    amount = active[3]
+                    status = 'ON'
+                source_id = active[0]
+            else:
+                amount = 'BRAK'
+                status = 'Brak budżetu'
+                source_id = '-'
+        result.append([
+            f"{year_str}-{month_str}",
+            amount,
+            status,
+            f"Budżet #{source_id}"
+        ])
+        current = current.replace(day=1) + relativedelta(months=1)
+    return result

@@ -2,12 +2,13 @@ import argparse
 
 from tracker.commands import add_expense, list_expenses, delete_expense, edit_expense, summarize_expenses, \
     add_recurring_expense, list_recurring_expenses, delete_recurring_expense, edit_recurring_expense, \
-    sync_recurring_expenses, set_budget, remove_budget, list_budgets, set_budget_off, raport_budget, current_budget
+    sync_recurring_expenses, set_budget, remove_budget, list_budgets, set_budget_off, raport_budget, current_budget, \
+    export_expense, export_recurring_expense, export_budget
 from tracker.file_ops import file_verification_main, file_verification_recurring, file_verification_budget
 from tracker.validators import validate_add, validate_delete, validate_edit, validate_list, validate_summary, \
     validate_recurring_edit, validate_recurring_add, validate_recurring_list, validate_recurring_delete, \
     validate_set_budget, validate_remove_budget, validate_list_budget, validate_turn_off_budget, validate_raport_budget, \
-    validate_current_budget
+    validate_current_budget, validate_expenses_export, validate_recurring_export, validate_budget_export
 
 
 def main():
@@ -110,6 +111,36 @@ def main():
 
     budget_current = budget_subparsers.add_parser('aktualny', help='Pokaż aktualny budżet')
 
+    export_parser = subparsers.add_parser('eksport', help="Eksportuj dane do pliku")
+    export_subparsers = export_parser.add_subparsers(dest='export_mode')
+
+    export_expenses = export_subparsers.add_parser('wydatki', help='Eksportuj wydatki do pliku')
+    export_expenses.add_argument('--format', choices=['csv', 'json','xlsx'], help='Format pliku do eksportu', default="csv")
+    export_expenses.add_argument('--plik', required=True, help='Nazwa pliku lub ścieżka do eksportu')
+    export_expenses.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne'], help="Filtr kategori wydatków do eskportu")
+    export_expenses.add_argument('--data-od', help="Filtr daty początkowej wydatków do eskportu")
+    export_expenses.add_argument('--data-do', help="Filtr daty końcowej wydatków do eskportu")
+    export_expenses.add_argument('--kwota-od', type=float,help="Filtr kwoty początkowej wydatków do eskportu")
+    export_expenses.add_argument('--kwota-do', type=float, help="Filtr kwoty końcowej wydatków do eskportu")
+
+    export_recurring = export_subparsers.add_parser('cykliczne', help='Eksportuj wydatki cykliczne do pliku')
+    export_recurring.add_argument('--format', choices=['csv', 'json','xlsx'], help='Format pliku do eksportu', default="csv")
+    export_recurring.add_argument('--plik', required=True, help='Nazwa pliku lub ścieżka do eksportu')
+    export_recurring.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne'],help="Filtr kategori wydatków cyklicznych do eskportu")
+    export_recurring.add_argument('--czestotliwosc', choices=['Codzienne', 'Tygodniowe', 'Dwutygodniowe', 'Miesięczne', 'Roczne'], help="Filtr częstotliwości wydatków cyklicznych do eskportu")
+    export_recurring.add_argument('--kwota-od', type=float, help="Filtr kwoty początkowej wydatków cyklicznych do eskportu")
+    export_recurring.add_argument('--kwota-do', type=float, help="Filtr kwoty końcowej wydatków cyklicznych do eskportu")
+
+    export_budgets = export_subparsers.add_parser('budzet', help='Eksportuj budżety do pliku')
+    export_budgets.add_argument('--format', choices=['csv', 'json','xlsx'], help='Format pliku do eksportu (domyślnie csv)', default="csv")
+    export_budgets.add_argument('--plik', required=True, help='Nazwa pliku lub ścieżka do eksportu')
+    export_budgets.add_argument('--tryb', choices=['ustawienia', 'obowiazujace'], default='ustawienia', help="Tryb eksportu: ustawienia (kiedy zostały ustawione) lub obowiazujace (rozwiniete na miesiace)")
+    export_budgets.add_argument('--data-od', help="Filtr daty początkowej budżetów do eskportu")
+    export_budgets.add_argument('--data-do', help="Filtr daty końcowej budżetów do eskportu")
+    export_budgets.add_argument('--kwota-od', type=float, help="Filtr kwoty początkowej budżetów do eskportu")
+    export_budgets.add_argument('--kwota-do', type=float, help="Filtr kwoty końcowej budżetów do eskportu")
+    export_budgets.add_argument('--status', choices=['ON', 'OFF', 'CURRENT'], help='Filtr statusu budżetów do eskportu')
+
     args = parser.parse_args()
 
     if args.mode == 'cykliczne':
@@ -156,6 +187,27 @@ def main():
         }
         validator = validators.get(args.budget_mode)
         handler = handlers.get(args.budget_mode)
+        if validator:
+            valid, error_msg = validator(args)
+            if not valid:
+                parser.error(error_msg)
+        if handler:
+            handler(args)
+        else:
+            parser.print_help()
+    elif args.mode == 'eksport':
+        validators = {
+            'wydatki': validate_expenses_export,
+            'cykliczne': validate_recurring_export,
+            'budzet': validate_budget_export,
+        }
+        handlers = {
+            'wydatki': export_expense,
+            'cykliczne': export_recurring_expense,
+            'budzet': export_budget,
+        }
+        validator = validators.get(args.export_mode)
+        handler = handlers.get(args.export_mode)
         if validator:
             valid, error_msg = validator(args)
             if not valid:

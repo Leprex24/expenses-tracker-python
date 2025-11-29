@@ -3,10 +3,12 @@ import tabulate
 
 from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add_new_expense_main, create_backup, \
     add_new_recurring_expense, load_recurring_expenses, write_all_recurring_expenses, load_budgets, write_all_budgets, \
-    CSV_PATH, RECURRING_PATH, BUDGET_PATH
+    CSV_PATH, RECURRING_PATH, BUDGET_PATH, resolve_export_path, export_to_csv, export_to_json, create_emergency_backup, \
+    export_to_excel
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics, get_due_dates, \
     find_last_due_date, date_to_string, already_exists, filter_by_amount, normalize_year_month, sort_budgets, \
-    sum_expenses_in_month, filter_by_date_budgets, filter_by_amount_budgets
+    sum_expenses_in_month, filter_by_date_budgets, filter_by_amount_budgets, create_expenses_metadata, \
+    expand_budgets_to_months
 
 
 def add_expense(args):
@@ -355,3 +357,117 @@ def raport_budget(args):
                    print(f"W miesiącu {date}, budżet wynosił {budget_for_raport[3]}zł i nie został on przekroczony. Można jeszcze wydać {float(budget_for_raport[3])-sum_of_expenses}zł.")
     else:
         print("Nie dodano jeszcze żadnego budżetu")
+
+def export_expense(args):
+    all_rows = get_all_expenses_main()
+    category = args.kategoria
+    headers = ['ID', 'Data', 'Opis', 'Kwota', 'Kategoria']
+    if not all_rows:
+        print("Nie można eksportować wydatków do pliku, ponieważ nie dodano jeszcze żadnych wydatków")
+        return
+    data = filter_by_date(args, all_rows)
+    data = filter_by_amount(args, data)
+    if category is not None:
+        data = [row for row in data if row[4] == category]
+    file_type = args.format
+    file_path = resolve_export_path(args.plik, file_type)
+    if data:
+        create_emergency_backup(file_path)
+        if file_type == 'csv':
+            data.insert(0, headers)
+            export_to_csv(data, file_path)
+            print(f"Wyeksportowano {len(data)-1} wydatków do {file_path}")
+        elif file_type == 'json':
+            data_dicts = [dict(zip(headers, row)) for row in data]
+            metadata = create_expenses_metadata(args, data_dicts, 'wydatki.csv')
+            export_to_json(data_dicts, file_path, metadata)
+            print(f"Wyeksportowano {len(data_dicts)} wydatków do {file_path}")
+        elif file_type == 'xlsx':
+            metadata = create_expenses_metadata(args, data, 'wydatki.csv')
+            export_to_excel(headers, data, file_path, metadata, "Wydatki")
+            print(f"Wyeksportowano {len(data)} wydatków do {file_path}")
+    else:
+        print("Brak wydatków do wyeksportowania")
+
+def export_recurring_expense(args):
+    all_rows = load_recurring_expenses()
+    category = args.kategoria
+    frequency = args.czestotliwosc
+    headers = ['ID', 'Data', 'Opis', 'Kwota', 'Kategoria', 'Częstotliwość']
+    if not all_rows:
+        print("Nie można eksportować wydatków cyklicznych do pliku, ponieważ nie dodano jeszcze żadnych wydatków")
+        return
+    data = filter_by_amount(args, all_rows)
+    if category is not None:
+        data = [row for row in data if row[4] == category]
+    if frequency is not None:
+        data = [row for row in data if row[5] == frequency]
+    file_type = args.format
+    file_path = resolve_export_path(args.plik, file_type)
+    if data:
+        create_emergency_backup(file_path)
+        if file_type == 'csv':
+            data.insert(0, headers)
+            export_to_csv(data, file_path)
+            print(f"Wyeksportowano {len(data)-1} wydatków cyklicznych do {file_path}")
+        elif file_type == 'json':
+            data_dicts = [dict(zip(headers, row)) for row in data]
+            metadata = create_expenses_metadata(args, data_dicts, 'recurring.csv')
+            export_to_json(data_dicts, file_path, metadata)
+            print(f"Wyeksportowano {len(data_dicts)} wydatków cyklicznych do {file_path}")
+        elif file_type == 'xlsx':
+            metadata = create_expenses_metadata(args, data, 'recurring.csv')
+            export_to_excel(headers, data, file_path, metadata, "Wydatki cykliczne")
+            print(f"Wyeksportowano {len(data)} wydatków cyklicznych do {file_path}")
+    else:
+        print("Brak wydatków cyklicznych do wyeksportowania")
+
+def export_budget(args):
+    all_rows = load_budgets()
+    status = args.status
+    file_type = args.format
+    file_path = resolve_export_path(args.plik, file_type)
+    if not all_rows:
+        print("Nie można eksportować budżetów do pliku, ponieważ nie dodano jeszcze żadnych budżetów")
+        return
+    if args.tryb == 'ustawienia':
+        data = filter_by_date_budgets(args, all_rows)
+        data = filter_by_amount_budgets(args, data)
+        if status is not None:
+            data = [row for row in data if row[4] == status]
+        headers = ['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status']
+    elif args.tryb == 'obowiazujace':
+        data = expand_budgets_to_months(args, all_rows)
+        if status is not None:
+            data = [row for row in data if row[2] == status]
+        if args.kwota_od or args.kwota_do:
+            filtered = []
+            for row in data:
+                if row[1] == 'BRAK':
+                    continue
+                amount = float(row[1])
+                if args.kwota_od and amount < args.kwota_od:
+                    continue
+                if args.kwota_do and amount > args.kwota_do:
+                    continue
+                filtered.append(row)
+            data = filtered
+        headers = ['Miesiąc', 'Kwota', 'Status', 'Źródło ID']
+    if data:
+        create_emergency_backup(file_path)
+        if file_type == 'csv':
+            data.insert(0, headers)
+            export_to_csv(data, file_path)
+            print(f"Wyeksportowano {len(data)-1} budżetów do {file_path}")
+        elif file_type == 'json':
+            data_dicts = [dict(zip(headers, row)) for row in data]
+            metadata = create_expenses_metadata(args, data_dicts, 'budget.csv')
+            export_to_json(data_dicts, file_path, metadata)
+            print(f"Wyeksportowano {len(data_dicts)} budżetów do {file_path}")
+        elif file_type == 'xlsx':
+            metadata = create_expenses_metadata(args, data, 'budget.csv')
+            export_to_excel(headers, data, file_path, metadata, "Budżety")
+            print(f"Wyeksportowano {len(data)} budżetów do {file_path}")
+    else:
+        print("Brak budżetów do wyeksportowania")
+

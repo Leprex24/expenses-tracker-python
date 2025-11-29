@@ -1,7 +1,11 @@
 import csv
+import json
 import os
 import shutil
 from datetime import datetime
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(PROJECT_ROOT, 'wydatki.csv')
@@ -9,6 +13,7 @@ RECURRING_PATH = os.path.join(PROJECT_ROOT, 'recurring.csv')
 BACKUP_DIR = os.path.join(PROJECT_ROOT, 'backups')
 BACKUP_EMERGENCY_DIR = os.path.join(PROJECT_ROOT, 'emergency backups')
 BUDGET_PATH = os.path.join(PROJECT_ROOT, 'budget.csv')
+EXPORTS_DIR = os.path.join(PROJECT_ROOT, 'exports')
 
 def file_verification_main():
     if not os.path.exists(CSV_PATH):
@@ -75,20 +80,14 @@ def delete_old_backups(file_type):
             os.remove(backup_for_removal)
 
 def create_emergency_backup(csv_file_path):
+    if not os.path.exists(csv_file_path):
+        return
     os.makedirs(BACKUP_EMERGENCY_DIR, exist_ok=True)
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
-
     basename = os.path.basename(csv_file_path)
-
-    if basename == 'wydatki.csv':
-        backup_filename = f"wydatki_backup_{timestamp}.csv"
-    elif basename == 'recurring.csv':
-        backup_filename = f"recurring_backup_{timestamp}.csv"
-    elif basename == 'budget.csv':
-        backup_filename = f"budget_backup_{timestamp}.csv"
-    else:
-        raise ValueError(f"Unknown CSV file: {basename}")
+    name, ext = os.path.splitext(basename)
+    backup_filename = f"{name}_emergency_backup_{timestamp}{ext}"
     backup_fullpath = os.path.join(BACKUP_EMERGENCY_DIR, backup_filename)
     shutil.copyfile(csv_file_path, backup_fullpath)
     print(f"Plik {basename} już istnieje, ale w innym formacie, utworzono jego kopię {backup_fullpath} oraz nadpisano do poprawnego formatu")
@@ -163,3 +162,60 @@ def write_all_budgets(all_rows):
         writer = csv.writer(csvfile)
         writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
         writer.writerows(all_rows)
+
+def resolve_export_path(output_arg, file_format='csv'):
+    if os.sep in output_arg or '/' in output_arg:
+        path = output_arg
+    else:
+        os.makedirs(EXPORTS_DIR, exist_ok=True)
+        path = os.path.join(EXPORTS_DIR, output_arg)
+    expected_extension = f".{file_format}"
+    if not path.endswith(expected_extension):
+        path += expected_extension
+    return path
+
+def export_to_csv(data, file_path):
+    with open(file_path, 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(data)
+
+def export_to_json(data, file_path, metadata=None):
+    export_data = {
+        'metadata': metadata if metadata else {},
+        'data': data,
+    }
+    with open(file_path, 'w', newline='', encoding='utf-8') as jsonfile:
+        json.dump(export_data, jsonfile, ensure_ascii=False, indent=4)
+
+def export_to_excel(headers, data, file_path, metadata=None, sheet_name='Dane'):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = sheet_name
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal='center')
+    for row in data:
+        ws.append(row)
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    ws.freeze_panes = 'A2'
+    if metadata:
+        ws_meta = wb.create_sheet("Informacje")
+        ws_meta.append(['Wyeksportowano:', metadata.get('exported_at', '')])
+        ws_meta.append(['Źródło:', metadata.get('source', '')])
+        ws_meta.append(['Liczba rekordów:', metadata.get('count', '')])
+        if metadata.get('filters'):
+            ws_meta.append(['Filtry:', ''])
+            for key, value in metadata['filters'].items():
+                ws_meta.append(['', f"{key}: {value}"])
+    wb.save(file_path)
