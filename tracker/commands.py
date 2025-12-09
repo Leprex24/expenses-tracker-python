@@ -16,7 +16,7 @@ def add_expense(args):
     expense_id = args.id
     date = args.data
     description = args.opis
-    amount = args.kwota
+    amount = f"{float(args.kwota):.2f}"
     category = args.kategoria
 
     if expense_id is None:
@@ -72,7 +72,7 @@ def edit_expense(args):
     expense_id = args.id
     date = args.data
     description = args.opis
-    amount = args.kwota
+    amount = f"{float(args.kwota):.2f}" if args.kwota is not None else None
     category = args.kategoria
     all_rows = get_all_expenses_main()
     id_list = [int(row[0]) for row in all_rows]
@@ -146,7 +146,7 @@ def add_recurring_expense(args):
     expense_id = args.id
     date = args.data
     description = args.opis
-    amount = args.kwota
+    amount = f"{float(args.kwota):.2f}"
     category = args.kategoria
     frequency = args.czestotliwosc
 
@@ -207,7 +207,7 @@ def edit_recurring_expense(args):
     expense_id = args.id
     date = args.data
     description = args.opis
-    amount = args.kwota
+    amount = f"{float(args.kwota):.2f}" if args.kwota is not None else None
     category = args.kategoria
     frequency = args.czestotliwosc
     all_rows = load_recurring_expenses()
@@ -243,7 +243,7 @@ def sync_recurring_expenses():
 def set_budget(args):
     create_backup(BUDGET_PATH)
     all_budgets = load_budgets()
-    amount = args.kwota
+    amount = f"{float(args.kwota):.2f}"
     id_list = [int(row[0]) for row in all_budgets if row[0] != 'ID']
     budget_id = max(id_list, default=0) + 1
     one_off = args.tylko_ten
