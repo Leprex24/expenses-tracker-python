@@ -13,6 +13,8 @@ from tracker.validators import validate_add, validate_delete, validate_edit, val
 
 def main():
     file_verification_main()
+    file_verification_recurring()
+    file_verification_budget()
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='mode', help='Dostepne tryby')
 
@@ -21,10 +23,10 @@ def main():
     add_parser.add_argument('-k', '--kwota', type=float, required=True, help='Kwota wydatku')
     add_parser.add_argument('--data', help='Niestandardowa data (YYYY-MM-DD), domyślnie data dzisiejsza')
     add_parser.add_argument('--id', type=int, help='Niestandardowe ID')
-    add_parser.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne' ], help='Kategoria wydatku, domyślnie zakupy')
+    add_parser.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Zdrowie', 'Inne' ], help='Kategoria wydatku, domyślnie zakupy')
 
     list_parser = subparsers.add_parser('wypisz', help='Wypisz wszystkie wydatki')
-    list_parser.add_argument('-k', '--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka'], help='Kategoria wydatków')
+    list_parser.add_argument('-k', '--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Zdrowie', 'Rozrywka'], help='Kategoria wydatków')
     list_parser.add_argument('--data-od', help='Data początkowa wyświetlanych wydatków (YYYY-MM-DD)')
     list_parser.add_argument('--data-do', help='Data końcowa wyświetlanych wydatków (YYYY-MM-DD)')
     list_parser.add_argument('--data', help='Konkretna data wyświetlanych wydatków (YYYY-MM-DD)')
@@ -41,10 +43,10 @@ def main():
     edit_parser.add_argument('-o', '--opis', type=str, help='Nowy opis wydatku')
     edit_parser.add_argument('-k', '--kwota', type=float, help='Nowa kwota wydatku')
     edit_parser.add_argument('-d', '--data', help='Nowa data wydatku (YYYY-MM-DD)')
-    edit_parser.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne' ], help='Nowa kategoria wydatku')
+    edit_parser.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Zdrowie','Inne' ], help='Nowa kategoria wydatku')
 
     summary_parser = subparsers.add_parser('podsumowanie', help='Podsumowanie wydatków')
-    summary_parser.add_argument('-k' ,'--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka'], help='Kategoria wydatków do podsumowania')
+    summary_parser.add_argument('-k' ,'--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Zdrowie', 'Rozrywka'], help='Kategoria wydatków do podsumowania')
     summary_parser.add_argument('-m', '--miesiac', type=str, help='Miesiac wydatków do podsumowania (MM)')
     summary_parser.add_argument('-r', '--rok', type=str, help='Rok wydatków do podsumowania (YYYY)')
     summary_parser.add_argument('--data-od', help='Data początkowa wydatków do podsumowania (YYYY-MM-DD)')
@@ -60,11 +62,11 @@ def main():
     recurring_add.add_argument('-k', '--kwota', type=float, required=True, help='Kwota wydatku')
     recurring_add.add_argument('--data', help='Niestandardowa data (YYYY-MM-DD), domyślnie data dzisiejsza')
     recurring_add.add_argument('--id', type=int, help='Niestandardowe ID')
-    recurring_add.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne' ], help='Kategoria wydatku, domyślnie zakupy')
+    recurring_add.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Zdrowie', 'Inne' ], help='Kategoria wydatku, domyślnie zakupy')
     recurring_add.add_argument('--czestotliwosc', choices=['Codzienne', 'Tygodniowe', 'Dwutygodniowe', 'Miesięczne', 'Roczne'], required=True, help='Częstotliwość wydatku')
 
     recurring_list = recurring_subparsers.add_parser('wypisz', help='Wypisz cykliczne wydatki')
-    recurring_list.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka'], help='Kategoria wydatków')
+    recurring_list.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Zdrowie', 'Inne'], help='Kategoria wydatków')
     recurring_list.add_argument('--czestotliwosc', choices=['Codzienne', 'Tygodniowe', 'Dwutygodniowe', 'Miesięczne', 'Roczne'], help='Częstotliwość wydatków')
     recurring_list.add_argument('--sortuj-po', choices=['ID', 'Data', 'Kwota', 'Kategoria', 'Częstotliwość'], help='Sortowanie wydatków, domyślnie ID', default='ID')
     recurring_list.add_argument('--malejaco', action='store_true', help='Sortuj malejąco, domyślnie rosnąco')
@@ -78,7 +80,7 @@ def main():
     recurring_edit.add_argument('-i', '--id', type=int, required=True, help='ID wydatku do edytuj')
     recurring_edit.add_argument('-o', '--opis', type=str, help='Nowy opis wydatku')
     recurring_edit.add_argument('-k', '--kwota', type=float, help='Nowa kwota wydatku')
-    recurring_edit.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Inne' ], help='Nowa kategoria wydatku')
+    recurring_edit.add_argument('--kategoria', choices=['Jedzenie', 'Zakupy', 'Transport', 'Rozrywka', 'Zdrowie', 'Inne' ], help='Nowa kategoria wydatku')
     recurring_edit.add_argument('--czestotliwosc', choices=['Codzienne', 'Tygodniowe', 'Dwutygodniowe', 'Miesięczne', 'Roczne'], help='Nowa częstotliwość wydatku')
     recurring_edit.add_argument('-d', '--data', help='Nowa data wydatku (YYYY-MM-DD)')
 
@@ -144,7 +146,6 @@ def main():
     args = parser.parse_args()
 
     if args.mode == 'cykliczne':
-        file_verification_recurring()
         validators = {
             'dodaj': validate_recurring_add,
             'wypisz': validate_recurring_list,
@@ -168,7 +169,6 @@ def main():
         else:
             parser.print_help()
     elif args.mode == 'budzet':
-        file_verification_budget()
         validators = {
             'ustaw': validate_set_budget,
             'usun': validate_remove_budget,

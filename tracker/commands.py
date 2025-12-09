@@ -118,12 +118,14 @@ def summarize_expenses(args):
             statistics_shopping = refine_statistics(calculate_expense_stats(data, "Zakupy"), "Zakupy")
             statistics_transport = refine_statistics(calculate_expense_stats(data, "Transport"), "Transport")
             statistics_entertainment = refine_statistics(calculate_expense_stats(data, "Rozrywka"), "Rozrywka")
+            statistics_health = refine_statistics(calculate_expense_stats(data, "Zdrowie"), "Zdrowie")
             statistics_other = refine_statistics(calculate_expense_stats(data, "Inne"), "Inne")
             category_statistics = [
                 statistics_food,
                 statistics_shopping,
                 statistics_transport,
                 statistics_entertainment,
+                statistics_health,
                 statistics_other,
             ]
             print("2. Podsumowanie po kategoriach:")
@@ -255,7 +257,7 @@ def set_budget(args):
         today = datetime.date.today()
         year = f"{today.year:04d}"
         month = f"{today.month:02d}"
-    provided_date_index = next((i for i, row in enumerate(all_budgets) if row[1] == year and row[2] == month), None)
+    provided_date_index = next((i for i, row in enumerate(all_budgets) if str(row[1]).zfill(4) == year and str(row[2]).zfill(2) == month), None)
     if provided_date_index is not None:
         all_budgets[provided_date_index][3] = amount
         all_budgets[provided_date_index][4] = status
@@ -281,7 +283,7 @@ def set_budget_off(args):
         today = datetime.date.today()
         year = f"{today.year:04d}"
         month = f"{today.month:02d}"
-    provided_date_index = next((i for i, row in enumerate(all_budgets) if row[1] == year and row[2] == month), None)
+    provided_date_index = next((i for i, row in enumerate(all_budgets) if str(row[1]).zfill(4) == year and str(row[2]).zfill(2) == month), None)
     if provided_date_index is not None:
         all_budgets[provided_date_index][3] = amount
         all_budgets[provided_date_index][4] = status
@@ -306,14 +308,14 @@ def current_budget(args):
     else:
         today = datetime.date.today()
         current_year, current_month = f"{today.year:04d}", f"{today.month:02d}"
-        current_budget = next((row for row in reversed(all_budgets) if (row[1], row[2]) == (current_year, current_month) and row[4] == "CURRENT"), None)
+        current_budget = next((row for row in reversed(all_budgets) if (str(row[1]).zfill(4), str(row[2]).zfill(2)) == (current_year, current_month) and row[4] == "CURRENT"), None)
         if current_budget:
             if current_budget[3] == "":
                 print("W tym miesiącu budżet jest wyłączony (tylko ten miesiąc)")
             else:
                 print(f"Aktualny budżet wynosi {float(current_budget[3]):.2f} zł na miesiąc (tylko ten miesiąc)")
         else:
-            current_budget = next((row for row in reversed(all_budgets) if (row[1], row[2]) <= (current_year, current_month) and row[4] != "CURRENT"), None)
+            current_budget = next((row for row in reversed(all_budgets) if (str(row[1]).zfill(4), str(row[2]).zfill(2)) <= (current_year, current_month) and row[4] != "CURRENT"), None)
             if current_budget:
                 if current_budget[3] == "":
                     print(f"Aktualnie nie obowiązuje żaden budżet (wyłączony od {current_budget[1]}-{current_budget[2]})")

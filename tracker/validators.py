@@ -54,10 +54,14 @@ def validate_amount(amount):
 
 
 def validate_add(args):
+    if args.opis and args.opis.strip() == "":
+        return False, "Opis nie może być pusty"
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
     if not validate_amount(args.kwota):
         return False, "Podano kwotę w niepoprawnym formacie"
+    if args.id and args.id <= 0:
+        return False, "ID musi być liczbą dodatnią"
     if id_exists(args.id):
         return False, "Podano już istniejące ID"
     return True, None
@@ -78,13 +82,19 @@ def validate_list(args):
     return True, None
 
 def validate_delete(args):
+    if args.id and args.id <= 0:
+        return False, "ID musi być liczbą dodatnią"
     if not id_exists(args.id):
         return False, f"Wydatek o ID: {args.id} nie istnieje"
     return True, None
 
 def validate_edit(args):
+    if args.opis and args.opis.strip() == "":
+        return False, "Opis nie może być pusty"
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
+    if args.id and args.id <= 0:
+        return False, "ID musi być liczbą dodatnią"
     if not id_exists(args.id):
         return False, f"Wydatek o ID: {args.id} nie istnieje"
     if not validate_amount(args.kwota):
@@ -113,8 +123,12 @@ def validate_summary(args):
     return True, None
 
 def validate_recurring_edit(args):
+    if args.opis and args.opis.strip() == "":
+        return False, "Opis nie może być pusty"
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
+    if args.id and args.id <= 0:
+        return False, "ID musi być liczbą dodatnią"
     if not id_exists_recurring(args.id):
         return False, f"Wydatek cykliczny o id {args.id} nie istnieje"
     if not validate_amount(args.kwota):
@@ -122,8 +136,12 @@ def validate_recurring_edit(args):
     return True, None
 
 def validate_recurring_add(args):
+    if args.opis and args.opis.strip() == "":
+        return False, "Opis nie może być pusty"
     if not validate_date(args.data):
         return False, "Podano nieprawidłową datę"
+    if args.id and args.id <= 0:
+        return False, "ID musi być liczbą dodatnią"
     if id_exists_recurring(args.id):
         return False, "Podano już istniejące ID"
     if not validate_amount(args.kwota):
@@ -131,6 +149,8 @@ def validate_recurring_add(args):
     return True, None
 
 def validate_recurring_delete(args):
+    if args.id and args.id <= 0:
+        return False, "ID musi być liczbą dodatnią"
     if not id_exists_recurring(args.id):
         return False, f"Wydatek cykliczny o ID: {args.id} nie istnieje"
     return True, None
