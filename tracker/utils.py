@@ -1,5 +1,6 @@
 from calendar import monthrange
 from datetime import timedelta, datetime, date
+import tabulate
 
 from tracker.file_ops import get_all_expenses_main, load_recurring_expenses, load_budgets
 from dateutil.relativedelta import relativedelta
@@ -17,10 +18,7 @@ def id_exists_recurring(expense_id, rows=None):
     id_list = [int(row[0]) for row in rows]
     return expense_id in id_list
 
-def filter_by_date(args, all_rows):
-    date_from = args.data_od
-    date_to = args.data_do
-
+def filter_by_date(date_from, date_to, all_rows, args):
     if date_from is None and date_to is None:
         data = all_rows
     elif date_from is None and date_to is not None:
@@ -29,10 +27,11 @@ def filter_by_date(args, all_rows):
         data = [row for row in all_rows if row[1] >= date_from]
     else:
         data = [row for row in all_rows if date_from <= row[1] <= date_to]
-    if args.mode == "wypisz":
-        d = args.data
-        if d is not None:
-            data = [row for row in all_rows if row[1] == d]
+    if args:
+        if args.mode == "wypisz":
+            d = args.data
+            if d is not None:
+                data = [row for row in all_rows if row[1] == d]
     return data
 
 def filter_by_amount(args, all_rows):
@@ -281,3 +280,89 @@ def expand_budgets_to_months(args, all_budgets):
         ])
         current = current.replace(day=1) + relativedelta(months=1)
     return result
+
+def print_budget_section(year, month):
+    all_budgets = load_budgets()
+    print("\n --- BUDŻET --- ")
+    if all_budgets:
+       budget_for_raport =  next((row for row in reversed(all_budgets) if (str(row[1]).zfill(4),str(row[2]).zfill(2)) <= (year,month)), None)
+       if budget_for_raport is None:
+           print("Nie można przeprowadzić raportu, nie ustawiono żadnego budżetu dla podanego miesiąca")
+       else:
+           if budget_for_raport[4]=="OFF" or (budget_for_raport[3]=="" and budget_for_raport[4]=="CURRENT"):
+               amount = None
+           else:
+               amount = float(budget_for_raport[3])
+           print(f"Ustalony budżet: {amount if amount is not None else "Nie przydzielono budżetu"}")
+           sum_of_expenses = sum_expenses_in_month(f'{year}-{month}')
+           print(f"Wydano: {sum_of_expenses}")
+           if amount is not None:
+               print(f"Pozostało: {amount - sum_of_expenses}")
+               print(f"Wykorzystano: {round(sum_of_expenses/amount*100,2)}%")
+    else:
+        print("Nie można przeprowadzić raportu, nie ustawiono żadnego budżetu dla podanego miesiąca")
+
+def print_expenses_section(date_from, date_to):
+    all_expenses = get_all_expenses_main()
+    print("\n --- STATYSTYKI OGÓLNE --- ")
+    filtered_expenses = filter_by_date(date_from, date_to, all_expenses, args=None)
+    if filtered_expenses:
+        stats = calculate_expense_stats(filtered_expenses)
+        print(f"Liczba wydatków: {stats[0]}")
+        print(f"Suma wydatków: {stats[1]} zł")
+        print(f"Średni wydatek: {stats[2]} zł")
+        print(f"Najwyższy wydatek: {stats[3]} zł (ID: {next(row[0] for row in filtered_expenses if float(row[3]) == stats[3])}, Data: {next(row[1] for row in filtered_expenses if float(row[3]) == stats[3])})")
+        print(f"Najniższy wydatek: {stats[4]} zł (ID: {next(row[0] for row in filtered_expenses if float(row[3]) == stats[4])}, Data: {next(row[1] for row in filtered_expenses if float(row[3]) == stats[4])})")
+
+        print_category_section(filtered_expenses)
+    else:
+        print("W podanym miesiącu nie zarejestrowano żadnych wydatków.")
+
+def print_category_section(fitlered_expenses):
+    print("\n --- STATYSTYKI KATEGORII --- ")
+    categories = set(row[4] for row in fitlered_expenses)
+    print(f"Kategorie występujące w tym miesiącu: {', '.join(categories)}")
+    category_stats = []
+    for category in categories:
+        number = 0
+        sum = 0
+        for row in fitlered_expenses:
+            if row[4] == category:
+                number += 1
+                sum += float(row[3])
+        share = round(sum/float(len(fitlered_expenses)), 2)
+        share_str = f"{share}%" if share >= 0.01 else "<1%"
+        category_stats.append([category, number, sum, share_str])
+    print(tabulate.tabulate(category_stats, headers=["Kategoria", "Liczba wydatków", "Suma wydatków", "Udział w wydatkach"], tablefmt="github", numalign="center", stralign="center"))
+
+def get_reccuring_in_month(year, month, all_expenses=get_all_expenses_main(), all_recurring=load_recurring_expenses()):
+    month_prefix = f"{year}-{month}"
+    recurring_in_month = []
+    for expense in all_expenses:
+        if not expense[1].startswith(month_prefix):
+            continue
+        for rec in all_recurring:
+            if expense[2] == rec[2] and expense[3] == rec[3] and expense[4] == rec[4]:
+                recurring_in_month.append([rec[2], rec[3], expense[1]])
+                break
+    return recurring_in_month
+
+def print_recurring_section(year, month):
+    print("\n --- WYDATKI CYKLICZNE --- ")
+    recurring_in_month = get_reccuring_in_month(year, month, get_all_expenses_main(), load_recurring_expenses())
+    if recurring_in_month:
+        print(f"Dodano {len(recurring_in_month)} wydatki cykliczne o łącznej wartości {sum(float(rec[1]) for rec in recurring_in_month)} zł")
+        for rec in recurring_in_month:
+            print(f" - {rec[0]}: {rec[1]} ({rec[2]})")
+    else:
+        print("W podanym miesiącu nie zarejestrowano żadnych wydatków cyklicznych.")
+
+def print_top_expenses(date_from, date_to, n):
+    all_expenses = get_all_expenses_main()
+    filtered_expenses = filter_by_date(date_from, date_to, all_expenses, args=None)
+    if filtered_expenses:
+        print("\n --- TOP 5 WYDATKÓW --- ")
+        top_expenses = sorted(filtered_expenses, key=lambda x: float(x[3]), reverse=True)[:n]
+        i = 1
+        for expense in top_expenses:
+            print(f" {i}. {expense[3]} zł - {expense[2]} ({expense[1]})")

@@ -3,12 +3,13 @@ import argparse
 from tracker.commands import add_expense, list_expenses, delete_expense, edit_expense, summarize_expenses, \
     add_recurring_expense, list_recurring_expenses, delete_recurring_expense, edit_recurring_expense, \
     sync_recurring_expenses, set_budget, remove_budget, list_budgets, set_budget_off, raport_budget, current_budget, \
-    export_expense, export_recurring_expense, export_budget
+    export_expense, export_recurring_expense, export_budget, full_monthly_raport
 from tracker.file_ops import file_verification_main, file_verification_recurring, file_verification_budget
 from tracker.validators import validate_add, validate_delete, validate_edit, validate_list, validate_summary, \
     validate_recurring_edit, validate_recurring_add, validate_recurring_list, validate_recurring_delete, \
     validate_set_budget, validate_remove_budget, validate_list_budget, validate_turn_off_budget, validate_raport_budget, \
-    validate_current_budget, validate_expenses_export, validate_recurring_export, validate_budget_export
+    validate_current_budget, validate_expenses_export, validate_recurring_export, validate_budget_export, \
+    validate_raport
 
 
 def main():
@@ -53,6 +54,10 @@ def main():
     summary_parser.add_argument('--data-do', help='Data końcowa wydatków do podsumowania (YYYY-MM-DD)')
     summary_parser.add_argument('--kwota-od', type=float ,help='Minimalna kwota wyświetlanych wydatków')
     summary_parser.add_argument('--kwota-do', type=float ,help='Maksymalna kwota wyświetlanych wydatków')
+
+    raport_parser = subparsers.add_parser('raport', help='Generuj raport miesieczny wydatków')
+    raport_parser.add_argument('-m', '--miesiac', type=str, required=True, help='Miesiac wydatków do raportu (MM)')
+    raport_parser.add_argument('-r', '--rok', type=str, required=True, help='Rok wydatków do raportu (YYYY)')
 
     recurring_parser = subparsers.add_parser('cykliczne', help="Zarządzaj wydatkami cyklicznymi")
     recurring_subparsers = recurring_parser.add_subparsers(dest="recurring_mode")
@@ -224,6 +229,7 @@ def main():
             'usun': validate_delete,
             'edytuj': validate_edit,
             'podsumowanie': validate_summary,
+            'raport': validate_raport,
         }
         if args.mode in validators:
             valid, error_msg = validators[args.mode](args)
@@ -235,6 +241,7 @@ def main():
                 'usun': delete_expense,
                 'edytuj': edit_expense,
                 'podsumowanie': summarize_expenses,
+                'raport': full_monthly_raport,
             }[args.mode]
             handler(args)
         else:

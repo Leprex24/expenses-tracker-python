@@ -233,3 +233,10 @@ def validate_budget_export(args):
     if args.data_do and args.data_od and args.data_do < args.data_od:
         return False, "--data-do nie może być mniejsza od --data-od"
     return True, None
+
+def validate_raport(args):
+    if not args.rok or not validate_year(args.rok):
+        return False, "Podano nieprawidłowy rok"
+    if not args.miesiac or not validate_month(args.miesiac):
+        return False, "Podano nieprawidłowy miesiąc"
+    return True, None

@@ -1,4 +1,6 @@
 import datetime
+from calendar import monthrange, month_name
+
 import tabulate
 
 from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add_new_expense_main, create_backup, \
@@ -8,7 +10,22 @@ from tracker.file_ops import get_all_expenses_main, write_all_expenses_main, add
 from tracker.utils import filter_by_date, sort_expenses, calculate_expense_stats, refine_statistics, get_due_dates, \
     find_last_due_date, date_to_string, already_exists, filter_by_amount, normalize_year_month, sort_budgets, \
     sum_expenses_in_month, filter_by_date_budgets, filter_by_amount_budgets, create_expenses_metadata, \
-    expand_budgets_to_months
+    expand_budgets_to_months, print_budget_section, print_expenses_section, print_recurring_section, print_top_expenses
+
+MONTH_NAMES = {
+    1: "Styczeń",
+    2: "Luty",
+    3: "Marzec",
+    4: "Kwiecień",
+    5: "Maj",
+    6: "Czerwiec",
+    7: "Lipiec",
+    8: "Sierpień",
+    9: "Wrzesień",
+    10: "Październik",
+    11: "Listopad",
+    12: "Grudzień"
+}
 
 
 def add_expense(args):
@@ -43,7 +60,9 @@ def list_expenses(args):
     if not all_rows:
         print("Nie dodano jeszcze żadnych wydatków")
         return
-    data = filter_by_date(args, all_rows)
+    date_from = args.data_od
+    date_to = args.data_do
+    data = filter_by_date(date_from, date_to, all_rows, args)
     data = filter_by_amount(args, data)
     if category is not None:
         data = [row for row in data if row[4] == category]
@@ -97,7 +116,9 @@ def summarize_expenses(args):
     if not all_rows:
         print("Nie można pokazać podsumowania, ponieważ nie dodano jeszcze żadnych wydatków")
         return
-    data = filter_by_date(args, all_rows)
+    date_from = args.data_od
+    date_to = args.data_do
+    data = filter_by_date(date_from, date_to, all_rows, args)
     data = filter_by_amount(args, data)
 
     if month is not None:
@@ -367,7 +388,9 @@ def export_expense(args):
     if not all_rows:
         print("Nie można eksportować wydatków do pliku, ponieważ nie dodano jeszcze żadnych wydatków")
         return
-    data = filter_by_date(args, all_rows)
+    date_from = args.data_od
+    date_to = args.data_do
+    data = filter_by_date(date_from, date_to, all_rows, args)
     data = filter_by_amount(args, data)
     if category is not None:
         data = [row for row in data if row[4] == category]
@@ -472,4 +495,20 @@ def export_budget(args):
             print(f"Wyeksportowano {len(data)} budżetów do {file_path}")
     else:
         print("Brak budżetów do wyeksportowania")
+
+def full_monthly_raport(args):
+    year_month = args.rok+"-"+args.miesiac
+    year, month = normalize_year_month(year_month)
+    date_from = f"{year}-{month}-01"
+    last_day = monthrange(int(year), int(month))[1]
+    date_to = f"{year}-{month}-{last_day:02d}"
+    print(f"\n{'='*50}")
+    print(f"RAPORT MIESIĘCZNY: {MONTH_NAMES[int(month)]} {year}")
+    print(f"{'='*50}")
+    print(f"Okres: {date_from} do {date_to}\n")
+
+    print_budget_section(year, month)
+    print_expenses_section(date_from, date_to)
+    print_recurring_section(year, month)
+    print_top_expenses(date_from, date_to, n=5)
 
