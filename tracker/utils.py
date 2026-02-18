@@ -34,10 +34,7 @@ def filter_by_date(date_from, date_to, all_rows, args):
                 data = [row for row in all_rows if row[1] == d]
     return data
 
-def filter_by_amount(args, all_rows):
-    amount_min = args.kwota_od
-    amount_max = args.kwota_do
-
+def filter_by_amount(amount_min, amount_max, all_rows):
     if amount_min is None and amount_max is None:
         data = all_rows
     elif amount_min is not None and amount_max is None:

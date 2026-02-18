@@ -63,7 +63,9 @@ def list_expenses(args):
     date_from = args.data_od
     date_to = args.data_do
     data = filter_by_date(date_from, date_to, all_rows, args)
-    data = filter_by_amount(args, data)
+    amount_from = args.kwota_od
+    amount_to = args.kwota_do
+    data = filter_by_amount(amount_from, amount_to, data)
     if category is not None:
         data = [row for row in data if row[4] == category]
 
@@ -119,7 +121,9 @@ def summarize_expenses(args):
     date_from = args.data_od
     date_to = args.data_do
     data = filter_by_date(date_from, date_to, all_rows, args)
-    data = filter_by_amount(args, data)
+    amount_from = args.kwota_od
+    amount_to = args.kwota_do
+    data = filter_by_amount(amount_from, amount_to, data)
 
     if month is not None:
         data = [row for row in all_rows if row[1].startswith(year + "-" + month)]
@@ -196,7 +200,9 @@ def list_recurring_expenses(args):
     if not all_rows:
         print("Nie dodano jeszcze żadnych wydatków")
         return
-    data = filter_by_amount(args, all_rows)
+    amount_from = args.kwota_od
+    amount_to = args.kwota_do
+    data = filter_by_amount(amount_from, amount_to, all_rows)
 
     if category is not None:
         data = [row for row in data if row[4] == category]
@@ -391,7 +397,9 @@ def export_expense(args):
     date_from = args.data_od
     date_to = args.data_do
     data = filter_by_date(date_from, date_to, all_rows, args)
-    data = filter_by_amount(args, data)
+    amount_from = args.kwota_od
+    amount_to = args.kwota_do
+    data = filter_by_amount(amount_from, amount_to, data)
     if category is not None:
         data = [row for row in data if row[4] == category]
     file_type = args.format
@@ -422,7 +430,9 @@ def export_recurring_expense(args):
     if not all_rows:
         print("Nie można eksportować wydatków cyklicznych do pliku, ponieważ nie dodano jeszcze żadnych wydatków")
         return
-    data = filter_by_amount(args, all_rows)
+    amount_from = args.kwota_od
+    amount_to = args.kwota_do
+    data = filter_by_amount(amount_from, amount_to, all_rows)
     if category is not None:
         data = [row for row in data if row[4] == category]
     if frequency is not None:
