@@ -28,13 +28,9 @@ MONTH_NAMES = {
 }
 
 
-def add_expense(args):
+def add_expense(description, amount, date=None, category=None, expense_id=None):
     create_backup(CSV_PATH)
-    expense_id = args.id
-    date = args.data
-    description = args.opis
-    amount = f"{float(args.kwota):.2f}"
-    category = args.kategoria
+    amount = f"{float(amount):.2f}"
 
     if expense_id is None:
         all_expenses = get_all_expenses_main()
@@ -49,7 +45,7 @@ def add_expense(args):
 
     add_new_expense_main(expense_id, date, description, amount, category)
 
-    print(f"Dodano nowy wydatek (ID: {expense_id})")
+    return expense_id
 
 def list_expenses(args):
     category = args.kategoria

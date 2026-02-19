@@ -223,27 +223,37 @@ def main():
             parser.print_help()
     else:
         sync_recurring_expenses()
-        validators = {
-            'dodaj': validate_add,
-            'wypisz': validate_list,
-            'usun': validate_delete,
-            'edytuj': validate_edit,
-            'podsumowanie': validate_summary,
-            'raport': validate_raport,
-        }
-        if args.mode in validators:
-            valid, error_msg = validators[args.mode](args)
+        if args.mode == 'dodaj':
+            valid, error_msg = validate_add(args.opis, args.kwota, args.data, args.kategoria, args.id)
             if not valid:
                 parser.error(error_msg)
-            handler = {
-                'dodaj': add_expense,
-                'wypisz': list_expenses,
-                'usun': delete_expense,
-                'edytuj': edit_expense,
-                'podsumowanie': summarize_expenses,
-                'raport': full_monthly_raport,
-            }[args.mode]
-            handler(args)
+            expense_id = add_expense(args.opis, args.kwota, args.data, args.kategoria, args.id)
+            print(f"Dodano wydatek o ID: {expense_id}")
+        elif args.mode == 'wypisz':
+            valid, error_msg = validate_list(args)
+            if not valid:
+                parser.error(error_msg)
+            list_expenses(args)
+        elif args.mode == 'usun':
+            valid, error_msg = validate_delete(args)
+            if not valid:
+                parser.error(error_msg)
+            delete_expense(args)
+        elif args.mode == 'edytuj':
+            valid, error_msg = validate_edit(args)
+            if not valid:
+                parser.error(error_msg)
+            edit_expense(args)
+        elif args.mode == 'podsumowanie':
+            valid, error_msg = validate_summary(args)
+            if not valid:
+                parser.error(error_msg)
+            summarize_expenses(args)
+        elif args.mode == 'raport':
+            valid, error_msg = validate_raport(args)
+            if not valid:
+                parser.error(error_msg)
+            full_monthly_raport(args)
         else:
             parser.print_help()
 

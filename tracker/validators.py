@@ -53,16 +53,16 @@ def validate_amount(amount):
         return False
 
 
-def validate_add(args):
-    if args.opis and args.opis.strip() == "":
+def validate_add(description, amount, date, category, expense_id=None):
+    if description and description.strip() == "":
         return False, "Opis nie może być pusty"
-    if not validate_date(args.data):
+    if not validate_date(date):
         return False, "Podano nieprawidłową datę"
-    if not validate_amount(args.kwota):
+    if not validate_amount(amount):
         return False, "Podano kwotę w niepoprawnym formacie"
-    if args.id and args.id <= 0:
+    if expense_id and expense_id <= 0:
         return False, "ID musi być liczbą dodatnią"
-    if id_exists(args.id):
+    if id_exists(expense_id):
         return False, "Podano już istniejące ID"
     return True, None
 

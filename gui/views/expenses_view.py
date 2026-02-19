@@ -87,6 +87,7 @@ class ExpensesView(QWidget):
             no_data_item = QTableWidgetItem("Brak danych do wyświetlenia")
             no_data_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.table.setItem(0, 0, no_data_item)
+            self.sum_label.setText("Suma : 0.00 zł")
             return
 
         for expense in data:
