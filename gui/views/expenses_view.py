@@ -40,8 +40,12 @@ class ExpensesView(QWidget):
 
         self.datefrom_edit = QDateEdit()
         self.datefrom_edit.setDate(QDate(2020, 1, 1))
+        self.datefrom_edit.setCalendarPopup(True)
+        self.datefrom_edit.setMaximumDate(QDate.currentDate())
         self.dateto_edit = QDateEdit()
         self.dateto_edit.setDate(QDate.currentDate())
+        self.dateto_edit.setMaximumDate(QDate.currentDate())
+        self.dateto_edit.setCalendarPopup(True)
         self.amountfrom_edit = QDoubleSpinBox()
         self.amountfrom_edit.setMaximum(999999.99)
         self.amountfrom_edit.setDecimals(2)

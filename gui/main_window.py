@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget, QStackedWidget, QLabel
 
+from gui.views.add_expense_view import AddExpenseView
 from gui.views.expenses_view import ExpensesView
 
 
@@ -15,9 +16,11 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.stack)
 
         self.expenses_list_view = ExpensesView()
-        self.expenses_add_view = QLabel("Dodaj wydatek")
+        self.expenses_add_view = AddExpenseView()
         self.expenses_edit_view = QLabel("Edytuj wydatek")
         self.expenses_delete_view = QLabel("Usuń wydatek")
+
+        self.expenses_add_view.expense_added.connect(self.expenses_list_view.load_data)
 
         self.stack.addWidget(self.expenses_list_view)
         self.stack.addWidget(self.expenses_add_view)

@@ -59,7 +59,7 @@ def validate_add(description, amount, date, category, expense_id=None):
     if not validate_date(date):
         return False, "Podano nieprawidłową datę"
     if not validate_amount(amount):
-        return False, "Podano kwotę w niepoprawnym formacie"
+        return False, "Podano niepoprawną kwotę"
     if expense_id and expense_id <= 0:
         return False, "ID musi być liczbą dodatnią"
     if id_exists(expense_id):
