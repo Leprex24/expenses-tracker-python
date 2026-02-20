@@ -240,10 +240,13 @@ def main():
                 parser.error(error_msg)
             delete_expense(args)
         elif args.mode == 'edytuj':
-            valid, error_msg = validate_edit(args)
+            valid, error_msg = validate_edit(args.opis, args.kwota, args.data, args.id, args.kategoria)
             if not valid:
                 parser.error(error_msg)
-            edit_expense(args)
+            if edit_expense(args.opis, args.kwota, args.data, args.id, args.kategoria):
+                print(f"Wydatek o ID: {args.id} został pomyślnie edytowany")
+            else:
+                parser.error(f"Nie udało się edytować wydatku o ID: {args.id}")
         elif args.mode == 'podsumowanie':
             valid, error_msg = validate_summary(args)
             if not valid:

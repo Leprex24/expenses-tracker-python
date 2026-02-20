@@ -88,16 +88,16 @@ def validate_delete(args):
         return False, f"Wydatek o ID: {args.id} nie istnieje"
     return True, None
 
-def validate_edit(args):
-    if args.opis and args.opis.strip() == "":
+def validate_edit(description, amount, date, expense_id, category):
+    if description and description.strip() == "":
         return False, "Opis nie może być pusty"
-    if not validate_date(args.data):
+    if not validate_date(date):
         return False, "Podano nieprawidłową datę"
-    if args.id and args.id <= 0:
+    if expense_id and expense_id <= 0:
         return False, "ID musi być liczbą dodatnią"
-    if not id_exists(args.id):
-        return False, f"Wydatek o ID: {args.id} nie istnieje"
-    if not validate_amount(args.kwota):
+    if not id_exists(expense_id):
+        return False, f"Wydatek o ID: {expense_id} nie istnieje"
+    if not validate_amount(amount):
         return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 

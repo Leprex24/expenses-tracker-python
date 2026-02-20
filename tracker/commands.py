@@ -84,13 +84,9 @@ def delete_expense(args):
     write_all_expenses_main(all_rows)
     print(f"Usunięto wydatek (ID: {expense_id})")
 
-def edit_expense(args):
+def edit_expense(description, amount, date, expense_id, category):
     create_backup(CSV_PATH)
-    expense_id = args.id
-    date = args.data
-    description = args.opis
-    amount = f"{float(args.kwota):.2f}" if args.kwota is not None else None
-    category = args.kategoria
+    amount_str = f"{float(amount):.2f}" if amount is not None else None
     all_rows = get_all_expenses_main()
     id_list = [int(row[0]) for row in all_rows]
     row_index = id_list.index(expense_id)
@@ -103,7 +99,7 @@ def edit_expense(args):
     if category is not None:
         all_rows[row_index][4] = category
     write_all_expenses_main(all_rows)
-    print(f"Edytowano wydatek (ID: {expense_id})")
+    return True
 
 def summarize_expenses(args):
     category = args.kategoria
