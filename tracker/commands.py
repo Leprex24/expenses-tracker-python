@@ -76,13 +76,12 @@ def list_expenses(args):
     else:
         print("Brak wydatków do wyświetlenia")
 
-def delete_expense(args):
+def delete_expense(expense_id):
     create_backup(CSV_PATH)
-    expense_id = args.id
     all_rows = get_all_expenses_main()
     all_rows = [row for row in all_rows if int(row[0]) != expense_id]
     write_all_expenses_main(all_rows)
-    print(f"Usunięto wydatek (ID: {expense_id})")
+    return True
 
 def edit_expense(description, amount, date, expense_id, category):
     create_backup(CSV_PATH)
@@ -94,7 +93,7 @@ def edit_expense(description, amount, date, expense_id, category):
         all_rows[row_index][1] = date
     if description is not None:
         all_rows[row_index][2] = description
-    if amount is not None:
+    if amount_str is not None:
         all_rows[row_index][3] = amount
     if category is not None:
         all_rows[row_index][4] = category

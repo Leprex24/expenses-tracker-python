@@ -235,10 +235,13 @@ def main():
                 parser.error(error_msg)
             list_expenses(args)
         elif args.mode == 'usun':
-            valid, error_msg = validate_delete(args)
+            valid, error_msg = validate_delete(args.id)
             if not valid:
                 parser.error(error_msg)
-            delete_expense(args)
+            if delete_expense(args.id):
+                print(f"Wydatek o ID: {args.id} został pomyślnie usunięty")
+            else:
+                parser.error(f"Nie udało się usunąć wydatku o ID: {args.id}")
         elif args.mode == 'edytuj':
             valid, error_msg = validate_edit(args.opis, args.kwota, args.data, args.id, args.kategoria)
             if not valid:

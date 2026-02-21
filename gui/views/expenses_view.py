@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt, QDate
+from PyQt6.QtCore import Qt, QDate, pyqtSignal
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView, QHBoxLayout, QLabel, \
     QDateEdit, QComboBox, QPushButton, QDoubleSpinBox, QMessageBox
 
@@ -9,6 +9,7 @@ from tracker.utils import filter_by_date, filter_by_amount
 
 
 class ExpensesView(QWidget):
+    edit_requested = pyqtSignal(list)
     def __init__(self):
         super().__init__()
         self.setup_ui()
@@ -24,6 +25,7 @@ class ExpensesView(QWidget):
         self.table.setHorizontalHeaderLabels(["ID", "Data", "Opis", "Kwota", "Kategoria"])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.table.itemDoubleClicked.connect(self.on_row_double_clicked)
 
         left_panel.addWidget(self.table)
 
@@ -145,5 +147,16 @@ class ExpensesView(QWidget):
         self.amountto_edit.setValue(0)
         self.category_edit.setCurrentIndex(0)
         self.load_data()
+
+    def on_row_double_clicked(self, item):
+        row = item.row()
+        expense_id = self.table.item(row, 0).text()
+        date = self.table.item(row, 1).text()
+        description = self.table.item(row, 2).text()
+        amount = self.table.item(row, 3).data(Qt.ItemDataRole.UserRole)
+        category = self.table.item(row, 4).text()
+        data = [expense_id, date, description, amount, category]
+        self.edit_requested.emit(data)
+
 
 

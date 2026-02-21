@@ -1,5 +1,6 @@
 import datetime
 
+from tracker.data_validation import VALID_CATEGORIES
 from tracker.utils import id_exists, id_exists_recurring, id_exists_budgets
 
 
@@ -81,15 +82,15 @@ def validate_list(args):
             return False, "Podano kwotę w niepoprawnym formacie"
     return True, None
 
-def validate_delete(args):
-    if args.id and args.id <= 0:
+def validate_delete(expense_id):
+    if expense_id and expense_id <= 0:
         return False, "ID musi być liczbą dodatnią"
-    if not id_exists(args.id):
-        return False, f"Wydatek o ID: {args.id} nie istnieje"
+    if not id_exists(expense_id):
+        return False, f"Wydatek o ID: {expense_id} nie istnieje"
     return True, None
 
 def validate_edit(description, amount, date, expense_id, category):
-    if description and description.strip() == "":
+    if description.strip() == "":
         return False, "Opis nie może być pusty"
     if not validate_date(date):
         return False, "Podano nieprawidłową datę"
@@ -99,6 +100,8 @@ def validate_edit(description, amount, date, expense_id, category):
         return False, f"Wydatek o ID: {expense_id} nie istnieje"
     if not validate_amount(amount):
         return False, "Podano kwote w niepoprawnym formacie"
+    if category not in VALID_CATEGORIES:
+        return False, "Podano nieprawidłową kategorię"
     return True, None
 
 def validate_summary(args):
