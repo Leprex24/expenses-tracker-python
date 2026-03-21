@@ -1,5 +1,6 @@
 import csv
 import json
+import logging
 import os
 import shutil
 from datetime import datetime
@@ -7,8 +8,7 @@ from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
 
-from tracker.data_validation import validate_and_fix_expenses, validate_and_fix_recurring, validate_and_fix_budgets, \
-    add_validation_logs, LOG_PATH
+from tracker.data_validation import validate_and_fix_expenses, validate_and_fix_recurring, validate_and_fix_budgets
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(PROJECT_ROOT, 'wydatki.csv')
@@ -18,12 +18,14 @@ BACKUP_EMERGENCY_DIR = os.path.join(PROJECT_ROOT, 'emergency backups')
 BUDGET_PATH = os.path.join(PROJECT_ROOT, 'budget.csv')
 EXPORTS_DIR = os.path.join(PROJECT_ROOT, 'exports')
 
+logger = logging.getLogger(__name__)
+
 def file_verification_main():
     if not os.path.exists(CSV_PATH):
         with open(CSV_PATH, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
-        print(f"Utworzono nowy plik: {CSV_PATH}")
+        logger.info(f"Utworzono nowy plik: {CSV_PATH}")
     else:
         with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
@@ -35,13 +37,8 @@ def file_verification_main():
                 writer = csv.writer(csvfile)
                 writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria'])
         all_rows = get_all_expenses_main()
-        fixed_rows, errors = validate_and_fix_expenses(all_rows)
-        if errors:
-            print(f"Znaleziono {len(errors)} błędów w pliku wydatki.csv")
-            add_validation_logs(errors, 'wydatki.csv')
-            write_all_expenses_main(fixed_rows)
-            print("Błędy zostały automatycznie naprawione")
-            print(f"Szczegóły zapisano w pliku: {LOG_PATH}")
+        fixed_rows = validate_and_fix_expenses(all_rows)
+        write_all_expenses_main(fixed_rows)
 
 def get_all_expenses_main():
     with open(CSV_PATH, 'r', encoding='utf-8') as csvfile:
@@ -101,14 +98,14 @@ def create_emergency_backup(csv_file_path):
     backup_filename = f"{name}_emergency_backup_{timestamp}{ext}"
     backup_fullpath = os.path.join(BACKUP_EMERGENCY_DIR, backup_filename)
     shutil.copyfile(csv_file_path, backup_fullpath)
-    print(f"Plik {basename} już istnieje, ale w innym formacie, utworzono jego kopię {backup_fullpath} oraz nadpisano do poprawnego formatu")
+    logger.info(f"Plik {basename} już istnieje, ale w innym formacie, utworzono jego kopię {backup_fullpath} oraz nadpisano do poprawnego formatu")
 
 def file_verification_recurring():
     if not os.path.exists(RECURRING_PATH):
         with open(RECURRING_PATH, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria', 'Częstotliwość'])
-        print(f"Utworzono nowy plik: {RECURRING_PATH}")
+        logger.info(f"Utworzono nowy plik: {RECURRING_PATH}")
     else:
         with open(RECURRING_PATH, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
@@ -120,13 +117,8 @@ def file_verification_recurring():
                 writer = csv.writer(csvfile)
                 writer.writerow(['ID', 'Data', 'Opis', 'Kwota', 'Kategoria', 'Częstotliwość'])
         all_rows = load_recurring_expenses()
-        fixed_rows, errors = validate_and_fix_recurring(all_rows)
-        if errors:
-            print(f"Znaleziono {len(errors)} błędów w pliku recurring.csv")
-            add_validation_logs(errors, 'recurring.csv')
-            write_all_recurring_expenses(fixed_rows)
-            print("Błędy zostały automatycznie naprawione")
-            print(f"Szczegóły zapisano w pliku: {LOG_PATH}")
+        fixed_rows = validate_and_fix_recurring(all_rows)
+        write_all_recurring_expenses(fixed_rows)
 
 def load_recurring_expenses():
     if not os.path.exists(RECURRING_PATH):
@@ -152,7 +144,7 @@ def file_verification_budget():
         with open(BUDGET_PATH, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
-        print(f"Utworzono nowy plik: {BUDGET_PATH}")
+        logger.info(f"Utworzono nowy plik: {BUDGET_PATH}")
     else:
         with open(BUDGET_PATH, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
@@ -164,13 +156,8 @@ def file_verification_budget():
                 writer = csv.writer(csvfile)
                 writer.writerow(['ID', 'Rok', 'Miesiąc', 'Kwota', 'Status'])
         all_rows = load_budgets()
-        fixed_rows, errors = validate_and_fix_budgets(all_rows)
-        if errors:
-            print(f"Znaleziono {len(errors)} błędów w pliku budget.csv")
-            add_validation_logs(errors, 'budget.csv')
-            write_all_budgets(fixed_rows)
-            print("Błędy zostały automatycznie naprawione")
-            print(f"Szczegóły zapisano w pliku: {LOG_PATH}")
+        fixed_rows = validate_and_fix_budgets(all_rows)
+        write_all_budgets(fixed_rows)
 
 def load_budgets():
     with open(BUDGET_PATH, 'r', encoding='utf-8') as csvfile:

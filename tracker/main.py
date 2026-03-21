@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from tracker.commands import add_expense, list_expenses, delete_expense, edit_expense, summarize_expenses, \
     add_recurring_expense, list_recurring_expenses, delete_recurring_expense, edit_recurring_expense, \
@@ -13,6 +14,7 @@ from tracker.validators import validate_add, validate_delete, validate_edit, val
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler()])
     file_verification_main()
     file_verification_recurring()
     file_verification_budget()
