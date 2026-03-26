@@ -157,14 +157,9 @@ def summarize_expenses(args):
     else:
         print("Brak wydatków w podanym okresie czasowym")
 
-def add_recurring_expense(args):
+def add_recurring_expense(description, amount, frequency,date=None, category=None, expense_id=None):
     create_backup(RECURRING_PATH)
-    expense_id = args.id
-    date = args.data
-    description = args.opis
-    amount = f"{float(args.kwota):.2f}"
-    category = args.kategoria
-    frequency = args.czestotliwosc
+    amount = f"{float(amount):.2f}"
 
     if expense_id is None:
         all_expenses = load_recurring_expenses()
@@ -179,7 +174,7 @@ def add_recurring_expense(args):
 
     add_new_recurring_expense(expense_id, date, description, amount, category, frequency)
 
-    print(f"Dodano nowy wydatek (ID: {expense_id})")
+    return expense_id
 
 def list_recurring_expenses(args):
     category = args.kategoria

@@ -138,16 +138,16 @@ def validate_recurring_edit(args):
         return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 
-def validate_recurring_add(args):
-    if args.opis and args.opis.strip() == "":
+def validate_recurring_add(description, amount, date, category, frequency, expense_id=None):
+    if description and description.strip() == "":
         return False, "Opis nie może być pusty"
-    if not validate_date(args.data):
+    if not validate_date(date):
         return False, "Podano nieprawidłową datę"
-    if args.id and args.id <= 0:
+    if expense_id and expense_id <= 0:
         return False, "ID musi być liczbą dodatnią"
-    if id_exists_recurring(args.id):
+    if id_exists_recurring(expense_id):
         return False, "Podano już istniejące ID"
-    if not validate_amount(args.kwota):
+    if not validate_amount(amount):
         return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 

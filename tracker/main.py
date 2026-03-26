@@ -153,26 +153,27 @@ def main():
     args = parser.parse_args()
 
     if args.mode == 'cykliczne':
-        validators = {
-            'dodaj': validate_recurring_add,
-            'wypisz': validate_recurring_list,
-            'usun': validate_recurring_delete,
-            'edytuj': validate_recurring_edit,
-        }
-        handlers = {
-            'dodaj': add_recurring_expense,
-            'wypisz': list_recurring_expenses,
-            'usun': delete_recurring_expense,
-            'edytuj': edit_recurring_expense,
-        }
-        validator = validators.get(args.recurring_mode)
-        handler = handlers.get(args.recurring_mode)
-        if validator:
-            valid, error_msg = validator(args)
+        if args.recurring_mode == 'dodaj':
+            valid, error_msg = validate_recurring_add(args.opis, args.kwota, args.data, args.kategoria, args.czestotliwosc)
             if not valid:
                 parser.error(error_msg)
-        if handler:
-            handler(args)
+            expense_id = add_recurring_expense(args.opis, args.kwota, args.czestotliwosc, args.data, args.kategoria, args.id)
+            print(f"Dodano wydatek cykliczny o ID: {expense_id}")
+        elif args.recurring_mode == 'wypisz':
+            valid, error_msg = validate_recurring_list(args)
+            if not valid:
+                parser.error(error_msg)
+            list_recurring_expenses(args)
+        elif args.recurring_mode == 'usun':
+            valid, error_msg = validate_recurring_delete(args)
+            if not valid:
+                parser.error(error_msg)
+            delete_recurring_expense(args)
+        elif args.recurring_mode == 'edytuj':
+            valid, error_msg = validate_recurring_edit(args)
+            if not valid:
+                parser.error(error_msg)
+            edit_recurring_expense(args)
         else:
             parser.print_help()
     elif args.mode == 'budzet':
