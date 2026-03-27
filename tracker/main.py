@@ -165,15 +165,18 @@ def main():
                 parser.error(error_msg)
             list_recurring_expenses(args)
         elif args.recurring_mode == 'usun':
-            valid, error_msg = validate_recurring_delete(args)
+            valid, error_msg = validate_recurring_delete(args.id)
             if not valid:
                 parser.error(error_msg)
-            delete_recurring_expense(args)
+            if delete_recurring_expense(args.id):
+                print(f"Wydatek cykliczny o ID: {args.id} został pomyślnie usunięty")
+            else:
+                parser.error(f"Nie udało się usunąć wydatku cyklicznego o ID: {args.id}")
         elif args.recurring_mode == 'edytuj':
-            valid, error_msg = validate_recurring_edit(args)
+            valid, error_msg = validate_recurring_edit(args.opis, args.kwota, args.data, args.id, args.kategoria, args.czestotliwosc)
             if not valid:
                 parser.error(error_msg)
-            edit_recurring_expense(args)
+            edit_recurring_expense(args.opis, args.kwota, args.data, args.id, args.kategoria, args.czestotliwosc)
         else:
             parser.print_help()
     elif args.mode == 'budzet':

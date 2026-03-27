@@ -1,6 +1,6 @@
 import datetime
 
-from tracker.data_validation import VALID_CATEGORIES
+from tracker.data_validation import VALID_CATEGORIES, VALID_FREQUENCIES
 from tracker.utils import id_exists, id_exists_recurring, id_exists_budgets
 
 
@@ -65,6 +65,8 @@ def validate_add(description, amount, date, category, expense_id=None):
         return False, "ID musi być liczbą dodatnią"
     if id_exists(expense_id):
         return False, "Podano już istniejące ID"
+    if category and category not in VALID_CATEGORIES:
+        return False, "Podana nieprawidłową kategorię"
     return True, None
 
 def validate_list(args):
@@ -100,7 +102,7 @@ def validate_edit(description, amount, date, expense_id, category):
         return False, f"Wydatek o ID: {expense_id} nie istnieje"
     if not validate_amount(amount):
         return False, "Podano kwote w niepoprawnym formacie"
-    if category not in VALID_CATEGORIES:
+    if category and category not in VALID_CATEGORIES:
         return False, "Podano nieprawidłową kategorię"
     return True, None
 
@@ -125,17 +127,21 @@ def validate_summary(args):
             return False, "Podano kwote w niepoprawnym formacie"
     return True, None
 
-def validate_recurring_edit(args):
-    if args.opis and args.opis.strip() == "":
+def validate_recurring_edit(description, amount, date, expense_id, category, frequency):
+    if description and description.strip() == "":
         return False, "Opis nie może być pusty"
-    if not validate_date(args.data):
+    if not validate_date(date):
         return False, "Podano nieprawidłową datę"
-    if args.id and args.id <= 0:
+    if expense_id and expense_id <= 0:
         return False, "ID musi być liczbą dodatnią"
-    if not id_exists_recurring(args.id):
-        return False, f"Wydatek cykliczny o id {args.id} nie istnieje"
-    if not validate_amount(args.kwota):
+    if not id_exists_recurring(expense_id):
+        return False, f"Wydatek cykliczny o id {expense_id} nie istnieje"
+    if not validate_amount(amount):
         return False, "Podano kwote w niepoprawnym formacie"
+    if category and category not in VALID_CATEGORIES:
+        return False, "Podano nieprawidłową kategorię"
+    if frequency and frequency not in VALID_FREQUENCIES:
+        return False, "Podano nieprawidłową częstotliwość"
     return True, None
 
 def validate_recurring_add(description, amount, date, category, frequency, expense_id=None):
@@ -149,13 +155,17 @@ def validate_recurring_add(description, amount, date, category, frequency, expen
         return False, "Podano już istniejące ID"
     if not validate_amount(amount):
         return False, "Podano kwote w niepoprawnym formacie"
+    if category and category not in VALID_CATEGORIES:
+        return False, "Podano nieprawidłową kategorię"
+    if frequency not in VALID_FREQUENCIES:
+        return False, "Podano nieprawidłową częstotliwość"
     return True, None
 
-def validate_recurring_delete(args):
-    if args.id and args.id <= 0:
+def validate_recurring_delete(expense_id):
+    if expense_id and expense_id <= 0:
         return False, "ID musi być liczbą dodatnią"
-    if not id_exists_recurring(args.id):
-        return False, f"Wydatek cykliczny o ID: {args.id} nie istnieje"
+    if not id_exists_recurring(expense_id):
+        return False, f"Wydatek cykliczny o ID: {expense_id} nie istnieje"
     return True, None
 
 def validate_recurring_list(args):

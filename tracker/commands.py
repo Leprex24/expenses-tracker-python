@@ -207,22 +207,16 @@ def list_recurring_expenses(args):
     else:
         print("Brak wydatków do wyświetlenia")
 
-def delete_recurring_expense(args):
+def delete_recurring_expense(expense_id):
     create_backup(RECURRING_PATH)
-    expense_id = args.id
     all_rows = load_recurring_expenses()
     all_rows = [row for row in all_rows if int(row[0]) != expense_id]
     write_all_recurring_expenses(all_rows)
-    print(f"Usunięto wydatek (ID: {expense_id})")
+    return True
 
-def edit_recurring_expense(args):
+def edit_recurring_expense(description, amount, date, expense_id, category, frequency):
     create_backup(RECURRING_PATH)
-    expense_id = args.id
-    date = args.data
-    description = args.opis
-    amount = f"{float(args.kwota):.2f}" if args.kwota is not None else None
-    category = args.kategoria
-    frequency = args.czestotliwosc
+    amount = f"{float(amount):.2f}" if amount is not None else None
     all_rows = load_recurring_expenses()
     id_list = [int(row[0]) for row in all_rows]
     row_index = id_list.index(expense_id)
@@ -237,7 +231,7 @@ def edit_recurring_expense(args):
     if frequency is not None:
         all_rows[row_index][5] = frequency
     write_all_recurring_expenses(all_rows)
-    print(f"Edytowano wydatek (ID: {expense_id})")
+    return True
 
 def sync_recurring_expenses():
     create_backup(CSV_PATH)

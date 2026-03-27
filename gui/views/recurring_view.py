@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTableWidget, QLabel, QDoubleSpinBox, QComboBox, \
     QPushButton, QTableWidgetItem, QMessageBox, QHeaderView
 
@@ -9,6 +9,7 @@ from tracker.utils import filter_by_amount
 
 
 class RecurringView(QWidget):
+    recurring_edit_requested = pyqtSignal(list)
     def __init__(self):
         super().__init__()
         self.setup_ui()
@@ -24,6 +25,7 @@ class RecurringView(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.itemDoubleClicked.connect(self.on_row_double_clicked)
         left_panel.addWidget(self.table)
         hbox.addLayout(left_panel, stretch=3)
 
@@ -125,3 +127,13 @@ class RecurringView(QWidget):
         self.frequency_edit.setCurrentIndex(0)
         self.load_data()
 
+    def on_row_double_clicked(self, item):
+        row = item.row()
+        expense_id = self.table.item(row, 0).text()
+        date = self.table.item(row, 1).text()
+        description = self.table.item(row, 2).text()
+        amount = self.table.item(row, 3).data(Qt.ItemDataRole.UserRole)
+        category = self.table.item(row, 4).text()
+        frequency = self.table.item(row, 5).text()
+        data = [expense_id, date, description, amount, category, frequency]
+        self.recurring_edit_requested.emit(data)
