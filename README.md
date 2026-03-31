@@ -179,7 +179,7 @@ cd expense-tracker
 python -m venv .venv
 source .venv/bin/activate  # or .venv\Scripts\activate on Windows
 
-pip install tabulate openpyxl python-dateutil PyQt6
+pip install -r requirements.txt
 
 # Run CLI
 python -m tracker.main dodaj -o "Coffee" -k 12 --kategoria Jedzenie

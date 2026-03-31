@@ -1,0 +1,4 @@
+tabulate
+openpyxl
+python-dateutil
+PyQt6
