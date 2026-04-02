@@ -142,3 +142,8 @@ class EditExpenseView(QWidget):
     def back_to_list(self):
         self.back_requested.emit()
 
+    def reset_to_default(self):
+        self.id_edit.setCurrentIndex(0)
+        self.id_edit.setEnabled(True)
+        self.back_button.setVisible(False)
+        self.load_expense()

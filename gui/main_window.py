@@ -67,11 +67,12 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(1)
 
     def show_expenses_edit(self):
+        self.expenses_edit_view.reset_to_default()
         self.stack.setCurrentIndex(2)
 
     def open_edit_view(self, data):
         self.expenses_edit_view.load_from_table(data)
-        self.show_expenses_edit()
+        self.stack.setCurrentIndex(2)
 
     def show_recurring_list(self):
         self.stack.setCurrentIndex(3)
@@ -80,8 +81,9 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentIndex(4)
 
     def show_recurring_edit(self):
+        self.recurring_edit_view.reset_to_default()
         self.stack.setCurrentIndex(5)
 
     def open_recurring_edit_view(self, data):
         self.recurring_edit_view.load_from_table(data)
-        self.show_recurring_edit()
+        self.stack.setCurrentIndex(5)
