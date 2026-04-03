@@ -87,3 +87,5 @@ class MainWindow(QMainWindow):
     def open_recurring_edit_view(self, data):
         self.recurring_edit_view.load_from_table(data)
         self.stack.setCurrentIndex(5)
+
+# problem z edycja wydatkow ze 2.00 zapisuje sei jako 2.0 wiec poprawic ze zawsze 2 miejsca po przecinku zapisuje, i drugi jakos zrobi zeby sygnal expense emited od nowa pobieral wszystkie wydatki z pliku csv bo sie jakby nie odswieza

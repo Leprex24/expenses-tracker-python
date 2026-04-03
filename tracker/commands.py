@@ -94,7 +94,7 @@ def edit_expense(description, amount, date, expense_id, category):
     if description is not None:
         all_rows[row_index][2] = description
     if amount_str is not None:
-        all_rows[row_index][3] = amount
+        all_rows[row_index][3] = amount_str
     if category is not None:
         all_rows[row_index][4] = category
     write_all_expenses_main(all_rows)
