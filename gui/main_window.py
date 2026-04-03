@@ -27,12 +27,12 @@ class MainWindow(QMainWindow):
         self.recurring_edit_view = EditRecurringView()
 
         self.expenses_list_view.edit_requested.connect(self.open_edit_view)
-        self.expenses_add_view.expense_added.connect(self.expenses_list_view.load_data)
-        self.expenses_edit_view.expense_edited.connect(self.expenses_list_view.load_data)
+        self.expenses_add_view.expense_added.connect(self.reload_expenses)
+        self.expenses_edit_view.expense_edited.connect(self.reload_expenses)
         self.expenses_edit_view.back_requested.connect(self.show_expenses_list)
         self.recurring_list_view.recurring_edit_requested.connect(self.open_recurring_edit_view)
-        self.recurring_add_view.recurring_expense_added.connect(self.recurring_list_view.load_data)
-        self.recurring_edit_view.recurring_expense_edited.connect(self.recurring_list_view.load_data)
+        self.recurring_add_view.recurring_expense_added.connect(self.reload_recurring_expenses)
+        self.recurring_edit_view.recurring_expense_edited.connect(self.reload_recurring_expenses)
         self.recurring_edit_view.recurring_back_requested.connect(self.show_recurring_list)
 
 
@@ -88,4 +88,10 @@ class MainWindow(QMainWindow):
         self.recurring_edit_view.load_from_table(data)
         self.stack.setCurrentIndex(5)
 
-# problem z edycja wydatkow ze 2.00 zapisuje sei jako 2.0 wiec poprawic ze zawsze 2 miejsca po przecinku zapisuje, i drugi jakos zrobi zeby sygnal expense emited od nowa pobieral wszystkie wydatki z pliku csv bo sie jakby nie odswieza
+    def reload_expenses(self):
+        self.expenses_list_view.load_data()
+        self.expenses_edit_view.reload_data()
+
+    def reload_recurring_expenses(self):
+        self.recurring_list_view.load_data()
+        self.recurring_edit_view.reload_data()

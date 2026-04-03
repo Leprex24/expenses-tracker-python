@@ -14,6 +14,8 @@ class EditRecurringView(QWidget):
     recurring_back_requested = pyqtSignal()
     def __init__(self):
         super().__init__()
+        self.id_list = None
+        self.all_expenses = None
         self.setup_ui()
 
     def setup_ui(self):
@@ -156,3 +158,13 @@ class EditRecurringView(QWidget):
         self.id_edit.setEnabled(True)
         self.back_button.setVisible(False)
         self.load_expense()
+        
+    def reload_data(self):
+        self.all_expenses = load_recurring_expenses()
+        self.id_list = [str(expense[0]) for expense in self.all_expenses]
+        current_id = self.id_edit.currentText()
+        self.id_edit.currentIndexChanged.disconnect()
+        self.id_edit.clear()
+        self.id_edit.addItems(self.id_list)
+        self.id_edit.currentIndexChanged.connect(self.id_edit_changed)
+        self.id_edit.setCurrentText(current_id if current_id in self.id_list else self.id_list[0])
