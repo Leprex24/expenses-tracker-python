@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal, Qt, QDate
+from PyQt6.QtCore import pyqtSignal, Qt, QDate, QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QLabel, QComboBox, QLineEdit, QDoubleSpinBox, QDateEdit, \
     QPushButton, QMessageBox
 
@@ -54,11 +54,12 @@ class EditExpenseView(QWidget):
             self.date_edit.setMaximumDate(QDate.currentDate())
             self.category_edit = QComboBox()
             self.category_edit.addItems(VALID_CATEGORIES)
-            self.current_expense = next(i for i in self.all_expenses if str(i[0]) == self.id_edit.currentText())
-            self.load_expense()
-            edit_expense_button = QPushButton("Zapisz zmiany")
-            reset_expense_button = QPushButton("Resetuj edytowanie")
-            delete_expense_button = QPushButton("Usuń wydatek")
+            if self.all_expenses:
+                self.current_expense = next(i for i in self.all_expenses if str(i[0]) == self.id_edit.currentText())
+                self.load_expense()
+            self.edit_expense_button = QPushButton("Zapisz zmiany")
+            self.reset_expense_button = QPushButton("Resetuj edytowanie")
+            self.delete_expense_button = QPushButton("Usuń wydatek")
             self.back_button = QPushButton("Powrót do listy")
             self.back_button.setVisible(False)
 
@@ -73,20 +74,22 @@ class EditExpenseView(QWidget):
             form.addWidget(QLabel("Kategoria:"))
             form.addWidget(self.category_edit)
             button_layout = QHBoxLayout()
-            button_layout.addWidget(edit_expense_button)
-            button_layout.addWidget(reset_expense_button)
-            button_layout.addWidget(delete_expense_button)
+            button_layout.addWidget(self.edit_expense_button)
+            button_layout.addWidget(self.reset_expense_button)
+            button_layout.addWidget(self.delete_expense_button)
             button_layout.addWidget(self.back_button)
             form.addLayout(button_layout)
             form.addStretch(1)
 
-            edit_expense_button.clicked.connect(self.edit_expense_gui)
-            reset_expense_button.clicked.connect(self.load_expense)
-            delete_expense_button.clicked.connect(self.delete_expense_gui)
+            self.edit_expense_button.clicked.connect(self.edit_expense_gui)
+            self.reset_expense_button.clicked.connect(self.load_expense)
+            self.delete_expense_button.clicked.connect(self.delete_expense_gui)
             self.back_button.clicked.connect(self.back_to_list)
 
             main_layout.addWidget(container, stretch=2)
             main_layout.addStretch(1)
+            if not self.all_expenses:
+                self.disable_all()
 
 
     def id_edit_changed(self):
@@ -145,17 +148,57 @@ class EditExpenseView(QWidget):
         self.back_requested.emit()
 
     def reset_to_default(self):
-        self.id_edit.setCurrentIndex(0)
-        self.id_edit.setEnabled(True)
         self.back_button.setVisible(False)
-        self.load_expense()
+        if self.all_expenses:
+            self.id_edit.setCurrentIndex(0)
+            self.id_edit.setEnabled(True)
+            self.load_expense()
+        else:
+            QTimer.singleShot(0, lambda: QMessageBox.information(self, "Brak danych", "Brak wydatków do wyświetlenia"))
 
     def reload_data(self):
         self.all_expenses = get_all_expenses_main()
-        self.id_list = [str(expense[0]) for expense in self.all_expenses]
-        current_id = self.id_edit.currentText()
-        self.id_edit.currentIndexChanged.disconnect()
-        self.id_edit.clear()
-        self.id_edit.addItems(self.id_list)
-        self.id_edit.currentIndexChanged.connect(self.id_edit_changed)
-        self.id_edit.setCurrentText(current_id if current_id in self.id_list else self.id_list[0])
+        if self.all_expenses:
+            self.enable_all()
+            self.id_list = [str(expense[0]) for expense in self.all_expenses]
+            current_id = self.id_edit.currentText()
+            self.id_edit.currentIndexChanged.disconnect()
+            self.id_edit.clear()
+            self.id_edit.addItems(self.id_list)
+            if current_id in self.id_list:
+                self.current_expense = next(i for i in self.all_expenses if str(i[0]) == current_id)
+            else:
+                self.current_expense = self.all_expenses[0]
+            self.id_edit.currentIndexChanged.connect(self.id_edit_changed)
+            self.id_edit.setCurrentText(current_id if current_id in self.id_list else self.id_list[0])
+            self.load_expense()
+        else:
+            self.diable_all()
+            self.clear_fields()
+
+    def clear_fields(self):
+        self.id_edit.setCurrentText("")
+        self.description_edit.clear()
+        self.amount_edit.setValue(0)
+        self.date_edit.setDate(QDate.currentDate())
+        self.category_edit.setCurrentIndex(1)
+
+    def enable_all(self):
+        self.id_edit.setEnabled(True)
+        self.description_edit.setEnabled(True)
+        self.amount_edit.setEnabled(True)
+        self.date_edit.setEnabled(True)
+        self.category_edit.setEnabled(True)
+        self.edit_expense_button.setEnabled(True)
+        self.reset_expense_button.setEnabled(True)
+        self.delete_expense_button.setEnabled(True)
+
+    def diable_all(self):
+        self.id_edit.setEnabled(False)
+        self.description_edit.setEnabled(False)
+        self.amount_edit.setEnabled(False)
+        self.date_edit.setEnabled(False)
+        self.category_edit.setEnabled(False)
+        self.edit_expense_button.setEnabled(False)
+        self.reset_expense_button.setEnabled(False)
+        self.delete_expense_button.setEnabled(False)

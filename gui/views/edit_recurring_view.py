@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal, QDate, Qt
+from PyQt6.QtCore import pyqtSignal, QDate, Qt, QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QLabel, QComboBox, QLineEdit, QDoubleSpinBox, \
     QDateEdit, QPushButton, QMessageBox
 from PyQt6.uic.properties import QtWidgets
@@ -39,59 +39,59 @@ class EditRecurringView(QWidget):
         form.addSpacing(10)
 
         self.all_expenses = load_recurring_expenses()
-        if not self.all_expenses:
-            form.addWidget(QLabel("Brak wydatków cyklicznych do edycji"))
-        else:
-            self.id_list = [str(expense[0]) for expense in self.all_expenses]
-            self.id_edit = QComboBox()
-            self.id_edit.addItems(self.id_list)
-            self.id_edit.currentIndexChanged.connect(self.id_edit_changed)
-            self.description_edit = QLineEdit()
-            self.amount_edit = QDoubleSpinBox()
-            self.amount_edit.setMaximum(999999.99)
-            self.amount_edit.setDecimals(2)
-            self.date_edit = QDateEdit()
-            self.date_edit.setCalendarPopup(True)
-            self.date_edit.setMaximumDate(QDate.currentDate())
-            self.category_edit = QComboBox()
-            self.category_edit.addItems(VALID_CATEGORIES)
-            self.frequency_edit = QComboBox()
-            self.frequency_edit.addItems(VALID_FREQUENCIES)
+        self.id_list = [str(expense[0]) for expense in self.all_expenses]
+        self.id_edit = QComboBox()
+        self.id_edit.addItems(self.id_list)
+        self.id_edit.currentIndexChanged.connect(self.id_edit_changed)
+        self.description_edit = QLineEdit()
+        self.amount_edit = QDoubleSpinBox()
+        self.amount_edit.setMaximum(999999.99)
+        self.amount_edit.setDecimals(2)
+        self.date_edit = QDateEdit()
+        self.date_edit.setCalendarPopup(True)
+        self.date_edit.setMaximumDate(QDate.currentDate())
+        self.category_edit = QComboBox()
+        self.category_edit.addItems(VALID_CATEGORIES)
+        self.frequency_edit = QComboBox()
+        self.frequency_edit.addItems(VALID_FREQUENCIES)
+        if self.all_expenses:
             self.current_expense = next(i for i in self.all_expenses if str(i[0]) == self.id_edit.currentText())
             self.load_expense()
-            edit_expense_button = QPushButton("Zapisz zmiany")
-            reset_expense_button = QPushButton("Resetuj edytowanie")
-            delete_expense_button = QPushButton("Usuń wydatek cykliczny")
-            self.back_button = QPushButton("Powrót do listy")
-            self.back_button.setVisible(False)
+        self.edit_expense_button = QPushButton("Zapisz zmiany")
+        self.reset_expense_button = QPushButton("Resetuj edytowanie")
+        self.delete_expense_button = QPushButton("Usuń wydatek cykliczny")
+        self.back_button = QPushButton("Powrót do listy")
+        self.back_button.setVisible(False)
 
-            form.addWidget(QLabel("Wybierz ID wydatku do edycji:"))
-            form.addWidget(self.id_edit)
-            form.addWidget(QLabel("Opis:"))
-            form.addWidget(self.description_edit)
-            form.addWidget(QLabel("Kwota:"))
-            form.addWidget(self.amount_edit)
-            form.addWidget(QLabel("Data:"))
-            form.addWidget(self.date_edit)
-            form.addWidget(QLabel("Kategoria:"))
-            form.addWidget(self.category_edit)
-            form.addWidget(QLabel("Częstotliwość:"))
-            form.addWidget(self.frequency_edit)
-            button_layout = QHBoxLayout()
-            button_layout.addWidget(edit_expense_button)
-            button_layout.addWidget(reset_expense_button)
-            button_layout.addWidget(delete_expense_button)
-            button_layout.addWidget(self.back_button)
-            form.addLayout(button_layout)
-            form.addStretch(1)
+        form.addWidget(QLabel("Wybierz ID wydatku do edycji:"))
+        form.addWidget(self.id_edit)
+        form.addWidget(QLabel("Opis:"))
+        form.addWidget(self.description_edit)
+        form.addWidget(QLabel("Kwota:"))
+        form.addWidget(self.amount_edit)
+        form.addWidget(QLabel("Data:"))
+        form.addWidget(self.date_edit)
+        form.addWidget(QLabel("Kategoria:"))
+        form.addWidget(self.category_edit)
+        form.addWidget(QLabel("Częstotliwość:"))
+        form.addWidget(self.frequency_edit)
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.edit_expense_button)
+        button_layout.addWidget(self.reset_expense_button)
+        button_layout.addWidget(self.delete_expense_button)
+        button_layout.addWidget(self.back_button)
+        form.addLayout(button_layout)
+        form.addStretch(1)
 
-            edit_expense_button.clicked.connect(self.edit_recurring_expense_gui)
-            reset_expense_button.clicked.connect(self.load_expense)
-            delete_expense_button.clicked.connect(self.delete_recurring_expense_gui)
-            self.back_button.clicked.connect(self.back_to_list)
+        self.edit_expense_button.clicked.connect(self.edit_recurring_expense_gui)
+        self.reset_expense_button.clicked.connect(self.load_expense)
+        self.delete_expense_button.clicked.connect(self.delete_recurring_expense_gui)
+        self.back_button.clicked.connect(self.back_to_list)
 
-            main_layout.addWidget(container, stretch=2)
-            main_layout.addStretch(1)
+        main_layout.addWidget(container, stretch=2)
+        main_layout.addStretch(1)
+        if not self.all_expenses:
+            self.disable_all()
 
     def id_edit_changed(self):
         self.current_expense = next(i for i in self.all_expenses if str(i[0]) == self.id_edit.currentText())
@@ -154,17 +154,61 @@ class EditRecurringView(QWidget):
         self.recurring_back_requested.emit()
 
     def reset_to_default(self):
-        self.id_edit.setCurrentIndex(0)
-        self.id_edit.setEnabled(True)
         self.back_button.setVisible(False)
-        self.load_expense()
+        if self.all_expenses:
+            self.id_edit.setCurrentIndex(0)
+            self.id_edit.setEnabled(True)
+            self.load_expense()
+
+        else:
+            QTimer.singleShot(0, lambda: QMessageBox.information(self, "Brak danych", "Brak wydatków cyklicznych do wyświetlenia"))
         
     def reload_data(self):
         self.all_expenses = load_recurring_expenses()
-        self.id_list = [str(expense[0]) for expense in self.all_expenses]
-        current_id = self.id_edit.currentText()
-        self.id_edit.currentIndexChanged.disconnect()
-        self.id_edit.clear()
-        self.id_edit.addItems(self.id_list)
-        self.id_edit.currentIndexChanged.connect(self.id_edit_changed)
-        self.id_edit.setCurrentText(current_id if current_id in self.id_list else self.id_list[0])
+        if self.all_expenses:
+            self.enable_all()
+            self.id_list = [str(expense[0]) for expense in self.all_expenses]
+            current_id = self.id_edit.currentText()
+            self.id_edit.currentIndexChanged.disconnect()
+            self.id_edit.clear()
+            self.id_edit.addItems(self.id_list)
+            if current_id in self.id_list:
+                self.current_expense = next(i for i in self.all_expenses if str(i[0]) == current_id)
+            else:
+                self.current_expense = self.all_expenses[0]
+            self.id_edit.currentIndexChanged.connect(self.id_edit_changed)
+            self.id_edit.setCurrentText(current_id if current_id in self.id_list else self.id_list[0])
+            self.load_expense()
+        else:
+            self.disable_all()
+            self.clear_fields()
+
+    def clear_fields(self):
+        self.id_edit.setCurrentText("")
+        self.description_edit.clear()
+        self.amount_edit.setValue(0)
+        self.date_edit.setDate(QDate.currentDate())
+        self.category_edit.setCurrentIndex(1)
+        self.frequency_edit.setCurrentIndex(3)
+
+    def enable_all(self):
+        self.id_edit.setEnabled(True)
+        self.description_edit.setEnabled(True)
+        self.amount_edit.setEnabled(True)
+        self.date_edit.setEnabled(True)
+        self.category_edit.setEnabled(True)
+        self.frequency_edit.setEnabled(True)
+        self.edit_expense_button.setEnabled(True)
+        self.reset_expense_button.setEnabled(True)
+        self.delete_expense_button.setEnabled(True)
+
+    def disable_all(self):
+        self.id_edit.setEnabled(False)
+        self.description_edit.setEnabled(False)
+        self.amount_edit.setEnabled(False)
+        self.date_edit.setEnabled(False)
+        self.category_edit.setEnabled(False)
+        self.frequency_edit.setEnabled(False)
+        self.edit_expense_button.setEnabled(False)
+        self.reset_expense_button.setEnabled(False)
+        self.delete_expense_button.setEnabled(False)
